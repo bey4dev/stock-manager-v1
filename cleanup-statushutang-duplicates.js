@@ -1,12 +1,9 @@
-const { google } = require('googleapis');
-const fs = require('fs');
-
 // Utility script untuk membersihkan data duplikat di StatusHutang sheet
 // Script ini akan menghapus baris duplikat berdasarkan nama kontak
 
 class StatusHutangCleaner {
   constructor() {
-    this.SPREADSHEET_ID = 'https://docs.google.com/spreadsheets/d/1hKKpN8Rlbh-VzI1Qiw2m-FWQpyFrczFE5uLvMUGzF8c/edit?gid=944993059#gid=944993059';
+    this.SPREADSHEET_ID = '1hKKpN8Rlbh-VzI1Qiw2m-FWQpyFrczFE5uLvMUGzF8c';
     this.SHEET_NAME = 'StatusHutang';
   }
 

@@ -166,12 +166,9 @@ class GoogleSheetsService {
 
   // Check if user is already authenticated (for page reload)
   async checkAuthenticationStatus(): Promise<boolean> {
-    console.log('🔍 Checking authentication status...');
-    
     try {
       // Initialize Google API if not already done
       if (!window.gapi) {
-        console.log('⏳ Google API not loaded, initializing...');
         await this.initGoogleAPI();
       }
 
@@ -179,13 +176,11 @@ class GoogleSheetsService {
       let retries = 0;
       const maxRetries = 5;
       while ((!window.gapi?.client) && retries < maxRetries) {
-        console.log(`⏳ GAPI client not ready, waiting... (attempt ${retries + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
         retries++;
       }
 
       if (!window.gapi?.client) {
-        console.warn('⚠️ GAPI client failed to initialize after retries');
         return false;
       }
 
@@ -194,23 +189,15 @@ class GoogleSheetsService {
       if (savedToken) {
         try {
           const tokenData = JSON.parse(savedToken);
-          console.log('🔍 Found saved token in localStorage');
-          console.log('🔍 Token data:', { 
-            hasAccessToken: !!tokenData.access_token,
-            timestamp: tokenData.timestamp,
-            expiresIn: tokenData.expires_in 
-          });
           
           // Check if token is expired
           if (this.isTokenExpired(tokenData)) {
-            console.log('⏰ Saved token is expired, removing from localStorage');
             localStorage.removeItem('google_oauth_token');
           } else {
             // Set the token in gapi client
             try {
               window.gapi.client.setToken(tokenData);
               this.isAuthenticated = true;
-              console.log('✅ Token restored from localStorage');
               
               // Test the token by making a simple API call
               try {
@@ -218,29 +205,22 @@ class GoogleSheetsService {
                   'path': 'https://www.googleapis.com/oauth2/v2/userinfo'
                 });
                 if (testResponse.status === 200) {
-                  console.log('✅ Token validation successful');
-                  
                   // Schedule auto-refresh for existing valid token
                   this.scheduleTokenRefresh(tokenData);
-                  
                   return true;
                 } else {
-                  console.warn('⚠️ Token validation failed, status:', testResponse.status);
                   throw new Error('Invalid token');
                 }
               } catch (testError) {
-                console.warn('⚠️ Token test failed:', testError);
                 localStorage.removeItem('google_oauth_token');
                 this.isAuthenticated = false;
                 return false;
               }
             } catch (setTokenError) {
-              console.warn('⚠️ Error setting token:', setTokenError);
               localStorage.removeItem('google_oauth_token');
             }
           }
         } catch (parseError) {
-          console.warn('⚠️ Error parsing saved token:', parseError);
           localStorage.removeItem('google_oauth_token');
         }
       }
@@ -248,21 +228,14 @@ class GoogleSheetsService {
       // Fallback: Check if we have a valid token in gapi client
       try {
         const token = window.gapi.client.getToken();
-        if (token && token.access_token) {
-          console.log('✅ Found existing access token in gapi client');
-          
-          // Simple validation - just check if token exists and has reasonable length
-          if (token.access_token.length > 50) {
-            console.log('✅ Token appears valid (length check passed)');
-            this.isAuthenticated = true;
-            return true;
-          }
+        if (token && token.access_token && token.access_token.length > 50) {
+          this.isAuthenticated = true;
+          return true;
         }
       } catch (tokenError) {
-        console.warn('⚠️ Error getting token from gapi client:', tokenError);
+        // Silent fail
       }
       
-      console.log('❌ No valid authentication found');
       this.isAuthenticated = false;
       return false;
       
@@ -427,18 +400,12 @@ class GoogleSheetsService {
       
       // Method 1: Try OAuth2 userinfo v2
       try {
-        console.log('🔍 [DEBUG] Trying OAuth2 v2 userinfo...');
         const response = await window.gapi.client.request({
           'path': 'https://www.googleapis.com/oauth2/v2/userinfo'
         });
         
-        console.log('📋 [DEBUG] OAuth2 v2 response:', response);
-        console.log('📋 [DEBUG] Response status:', response.status);
-        console.log('📋 [DEBUG] Response result:', response.result);
-        
         if (response.result && response.status === 200) {
           userInfo = response.result;
-          console.log('✅ [DEBUG] Got userinfo from OAuth2 v2:', userInfo);
         }
       } catch (v2Error) {
         console.warn('⚠️ OAuth2 v2 failed:', v2Error);
@@ -447,26 +414,17 @@ class GoogleSheetsService {
       // Method 2: Try direct fetch with access token
       if (!userInfo) {
         try {
-          console.log('🔍 [DEBUG] Trying direct fetch...');
           const token = window.gapi.client.getToken();
           if (token?.access_token) {
-            console.log('🔑 [DEBUG] Using access token:', token.access_token.substring(0, 20) + '...');
             const fetchResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
               headers: {
                 'Authorization': `Bearer ${token.access_token}`
               }
             });
             
-            console.log('📋 [DEBUG] Fetch response status:', fetchResponse.status);
-            
             if (fetchResponse.ok) {
               userInfo = await fetchResponse.json();
-              console.log('✅ [DEBUG] Got userinfo from fetch:', userInfo);
-            } else {
-              console.warn('⚠️ Fetch failed with status:', fetchResponse.status);
             }
-          } else {
-            console.warn('⚠️ No access token available for fetch');
           }
         } catch (fetchError) {
           console.warn('⚠️ Direct fetch failed:', fetchError);
@@ -474,7 +432,6 @@ class GoogleSheetsService {
       }
       
       if (userInfo) {
-        console.log('📋 [DEBUG] Processing user info:', userInfo);
         const { name, email, given_name, family_name } = userInfo;
         
         // Build full name from available data
@@ -494,7 +451,6 @@ class GoogleSheetsService {
           email: userEmail 
         };
         
-        console.log('✅ Final profile constructed:', profile);
         return profile;
       }
       
@@ -1079,8 +1035,6 @@ class GoogleSheetsService {
 
   // Generic sheet data methods
   async getSheetData(sheetName: string): Promise<{ success: boolean; data?: any[][] }> {
-    console.log(`📊 Fetching data from sheet: ${sheetName}`);
-
     try {
       return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
@@ -1095,11 +1049,9 @@ class GoogleSheetsService {
 
         const rows = response.result.values || [];
         if (rows.length <= 1) {
-          console.log(`📦 No data found in ${sheetName}`);
           return { success: true, data: [] };
         }
 
-        console.log(`✅ Fetched ${rows.length - 1} rows from ${sheetName}`);
         return { success: true, data: rows.slice(1) }; // Skip header row
       });
     } catch (error) {
@@ -1109,8 +1061,6 @@ class GoogleSheetsService {
   }
 
   async appendToSheet(sheetName: string, rows: any[][]): Promise<{ success: boolean }> {
-    console.log(`📝 Appending ${rows.length} rows to ${sheetName}`);
-
     try {
       return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
@@ -1118,7 +1068,7 @@ class GoogleSheetsService {
           throw new Error('Google Sheets API not initialized');
         }
 
-        const response = await window.gapi.client.sheets.spreadsheets.values.append({
+        await window.gapi.client.sheets.spreadsheets.values.append({
           spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
           range: `${sheetName}!A:Z`,
           valueInputOption: 'USER_ENTERED',
@@ -1127,7 +1077,6 @@ class GoogleSheetsService {
           }
         });
 
-        console.log(`✅ Successfully appended to ${sheetName}:`, response);
         return { success: true };
       });
     } catch (error) {
@@ -1137,8 +1086,6 @@ class GoogleSheetsService {
   }
 
   async updateSheetRow(sheetName: string, rowIndex: number, rowData: any[]): Promise<{ success: boolean }> {
-    console.log(`📝 Updating row ${rowIndex} in ${sheetName}`);
-
     try {
       return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
@@ -1147,7 +1094,7 @@ class GoogleSheetsService {
         }
 
         const range = `${sheetName}!A${rowIndex}:Z${rowIndex}`;
-        const response = await window.gapi.client.sheets.spreadsheets.values.update({
+        await window.gapi.client.sheets.spreadsheets.values.update({
           spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
           range: range,
           valueInputOption: 'USER_ENTERED',
@@ -1156,7 +1103,6 @@ class GoogleSheetsService {
           }
         });
 
-        console.log(`✅ Successfully updated row ${rowIndex} in ${sheetName}:`, response);
         return { success: true };
       });
     } catch (error) {
@@ -1351,7 +1297,6 @@ class GoogleSheetsService {
   // Helper method to check if token is expired
   private isTokenExpired(token: any): boolean {
     if (!token) {
-      console.log('🔍 Token expiry check: No token provided');
       return true;
     }
     
@@ -1373,16 +1318,10 @@ class GoogleSheetsService {
       // No expiry info, check if token is recent (less than 1 hour old)
       const tokenAge = now - (token.timestamp || 0);
       const maxAge = 60 * 60 * 1000; // 1 hour
-      const isOld = tokenAge > maxAge;
-      console.log(`🔍 Token age check: age=${tokenAge}ms, maxAge=${maxAge}ms, isOld=${isOld}`);
-      return isOld;
+      return tokenAge > maxAge;
     }
     
-    const isExpired = now >= expiresAt;
-    const timeLeft = Math.max(0, expiresAt - now);
-    
-    console.log(`🔍 Token expiry check: now=${now}, expires=${expiresAt}, expired=${isExpired}, timeLeft=${Math.round(timeLeft/1000/60)}min`);
-    return isExpired;
+    return now >= expiresAt;
   }
 
   // Auto-refresh token before it expires
@@ -1564,8 +1503,6 @@ class GoogleSheetsService {
     terakhirHutang?: string;
     terakhirBayar?: string;
   }): Promise<boolean> {
-    console.log('🔄 Updating StatusHutang for contact:', contactData.contactName);
-    
     try {
       return await this.retryWithFreshToken(async () => {
         // Get or create StatusHutang sheet data
@@ -1577,24 +1514,15 @@ class GoogleSheetsService {
         let existingRowIndex = -1;
         const searchContactName = contactData.contactName?.toString().trim().toLowerCase();
         
-        console.log(`[DEBUG StatusHutang] Looking for contact: "${contactData.contactName}"`);
-        console.log(`[DEBUG StatusHutang] Normalized search name: "${searchContactName}"`);
-        console.log(`[DEBUG StatusHutang] Total rows to check: ${dataRows.length}`);
-        
         for (let i = 0; i < dataRows.length; i++) {
           const row = dataRows[i];
           const existingContactName = row[1]?.toString().trim().toLowerCase();
           
-          console.log(`[DEBUG StatusHutang] Row ${i}: Checking "${existingContactName}" vs "${searchContactName}"`);
-          
           if (existingContactName === searchContactName) {
             existingRowIndex = i;
-            console.log(`[DEBUG StatusHutang] ✅ MATCH FOUND at row index ${i}`);
             break;
           }
         }
-        
-        console.log(`[DEBUG StatusHutang] Final result - existing row index: ${existingRowIndex} for contact: ${contactData.contactName}`);
         
         
         // Create timestamp in ISO format for better Google Sheets compatibility
@@ -1619,14 +1547,9 @@ class GoogleSheetsService {
         if (existingRowIndex >= 0) {
           // Update existing record
           const rowNumber = existingRowIndex + 2; // +1 for 0-based index, +1 for header row
-          console.log(`🔄 Updating existing record at row ${rowNumber} for contact: ${contactData.contactName}`);
           const updateResult = await this.updateSheetRow('StatusHutang', rowNumber, rowData);
-          console.log(`✅ Updated existing StatusHutang record for ${contactData.contactName}`);
           return updateResult.success;
         } else {
-          // Before appending, do one final check to prevent race conditions
-          console.log(`⚠️ No existing record found for ${contactData.contactName}. Double-checking before creating new record...`);
-          
           // Re-fetch fresh data to avoid race conditions
           const freshResponse = await this.getSheetData('StatusHutang');
           const freshRows = freshResponse.data || [];
@@ -1638,16 +1561,14 @@ class GoogleSheetsService {
           });
           
           if (finalCheck >= 0) {
-            console.log(`⚠️ Race condition detected! Record for ${contactData.contactName} was created by another process. Updating instead...`);
+            // Race condition detected - update instead of append
             const rowNumber = finalCheck + 2;
             const updateResult = await this.updateSheetRow('StatusHutang', rowNumber, rowData);
             return updateResult.success;
           }
           
           // Append new record only if definitely not exists
-          console.log(`✅ Creating new StatusHutang record for ${contactData.contactName}`);
           const appendResult = await this.appendToSheet('StatusHutang', [rowData]);
-          console.log(`✅ Created new StatusHutang record for ${contactData.contactName}`);
           return appendResult.success;
         }
       });
