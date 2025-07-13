@@ -225,9 +225,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Get user profile with fallback
         let userProfile;
         try {
-          console.log('🔍 [DEBUG] Calling getUserProfile...');
+
           userProfile = await googleSheetsService.getUserProfile();
-          console.log('👤 [DEBUG] User profile retrieved:', userProfile);
+
         } catch (profileError) {
           console.log('⚠️ Profile fetch failed, using fallback:', profileError);
           userProfile = { name: 'Google User', email: 'user@gmail.com' };
@@ -238,9 +238,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           user: userProfile
         };
         
-        console.log('💾 [DEBUG] Auth data to save:', authData);
-        console.log('💾 [DEBUG] User name to save:', userProfile.name);
-        console.log('💾 [DEBUG] User email to save:', userProfile.email);
+
+
+
         
         dispatch({ 
           type: 'SET_AUTHENTICATED', 
@@ -249,11 +249,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         
         // Save to localStorage
         localStorage.setItem('stockmanager_auth', JSON.stringify(authData));
-        console.log('💾 [DEBUG] Saved to localStorage');
-        
-        // Verify localStorage save
-        const saved = localStorage.getItem('stockmanager_auth');
-        console.log('💾 [DEBUG] Verification - saved data:', saved);
+
         
         console.log('📊 Loading data from Google Sheets...');
         try {

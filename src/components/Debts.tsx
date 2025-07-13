@@ -66,6 +66,7 @@ const Debts = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'partial' | 'completed'>('all');
   const [contactSearchQuery, setContactSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'summary' | 'list'>('summary');
+  const [sortBy, setSortBy] = useState<'lastDebtTime' | 'netBalance' | 'contactName' | 'lastPaymentDate' | 'debtCount'>('lastDebtTime');
 
   // Modal state for modern UI notifications
   const [modalState, setModalState] = useState<{
@@ -1207,29 +1208,7 @@ const Debts = () => {
         }
         return true;
       })
-      .sort((a, b) => {
-        // Primary sort: by last debt time (newest first - waktu input hutang)
-        if (a.lastDebtTime && b.lastDebtTime) {
-          const timeA = new Date(a.lastDebtTime);
-          const timeB = new Date(b.lastDebtTime);
-          if (timeA.getTime() !== timeB.getTime()) {
-            console.log(`[DEBUG SORT] Comparing ${a.contactName} (${a.lastDebtTime}) vs ${b.contactName} (${b.lastDebtTime})`);
-            return timeB.getTime() - timeA.getTime(); // Newest first
-          }
-        } else if (a.lastDebtTime && !b.lastDebtTime) {
-          return -1; // a has debt time, b doesn't - a comes first
-        } else if (!a.lastDebtTime && b.lastDebtTime) {
-          return 1; // b has debt time, a doesn't - b comes first
-        }
-        
-        // Secondary sort: by net balance (highest debt first)
-        if (a.netBalance !== b.netBalance) {
-          return b.netBalance - a.netBalance;
-        }
-        
-        // Tertiary sort: by contact name alphabetically
-        return a.contactName.localeCompare(b.contactName);
-      });
+      .sort((a, b) => sortContactSummaries(a, b, sortBy));
     
     console.log('[DEBUG SUMMARIES] Final summaries count:', result.length);
     if (result.length > 0) {
@@ -1254,6 +1233,67 @@ const Debts = () => {
     }
     
     return result;
+  };
+
+  // Fungsi sorting dinamis untuk contact summaries
+  const sortContactSummaries = (a: any, b: any, sortType: typeof sortBy) => {
+    switch (sortType) {
+      case 'lastDebtTime':
+        // Primary sort: by last debt time (newest first - waktu input hutang)
+        if (a.lastDebtTime && b.lastDebtTime) {
+          const timeA = new Date(a.lastDebtTime);
+          const timeB = new Date(b.lastDebtTime);
+          if (timeA.getTime() !== timeB.getTime()) {
+            console.log(`[DEBUG SORT] Comparing ${a.contactName} (${a.lastDebtTime}) vs ${b.contactName} (${b.lastDebtTime})`);
+            return timeB.getTime() - timeA.getTime(); // Newest first
+          }
+        } else if (a.lastDebtTime && !b.lastDebtTime) {
+          return -1; // a has debt time, b doesn't - a comes first
+        } else if (!a.lastDebtTime && b.lastDebtTime) {
+          return 1; // b has debt time, a doesn't - b comes first
+        }
+        // Fallback to name if same time
+        return a.contactName.localeCompare(b.contactName);
+
+      case 'netBalance':
+        // Sort by net balance (highest debt first, then lowest negative balance)
+        if (a.netBalance !== b.netBalance) {
+          return b.netBalance - a.netBalance;
+        }
+        // Fallback to name if same balance
+        return a.contactName.localeCompare(b.contactName);
+
+      case 'contactName':
+        // Alphabetical sort by contact name
+        return a.contactName.localeCompare(b.contactName);
+
+      case 'lastPaymentDate':
+        // Sort by last payment date (newest first)
+        if (a.lastPaymentDate && b.lastPaymentDate) {
+          const paymentA = new Date(a.lastPaymentDate);
+          const paymentB = new Date(b.lastPaymentDate);
+          if (paymentA.getTime() !== paymentB.getTime()) {
+            return paymentB.getTime() - paymentA.getTime(); // Newest first
+          }
+        } else if (a.lastPaymentDate && !b.lastPaymentDate) {
+          return -1; // a has payment date, b doesn't - a comes first
+        } else if (!a.lastPaymentDate && b.lastPaymentDate) {
+          return 1; // b has payment date, a doesn't - b comes first
+        }
+        // Fallback to name if same payment date
+        return a.contactName.localeCompare(b.contactName);
+
+      case 'debtCount':
+        // Sort by debt count (highest count first)
+        if (a.debtCount !== b.debtCount) {
+          return b.debtCount - a.debtCount;
+        }
+        // Fallback to name if same count
+        return a.contactName.localeCompare(b.contactName);
+
+      default:
+        return a.contactName.localeCompare(b.contactName);
+    }
   };
 
   const contactSummaries = getContactSummaries(contactSearchQuery);
@@ -1696,11 +1736,24 @@ const Debts = () => {
           </div>
         </div>
         <div className="overflow-x-auto">
-          {/* Table sorting info */}
-          <div className="px-6 py-2 bg-gray-50 border-b border-gray-200">
+          {/* Table sorting controls */}
+          <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
             <p className="text-xs text-gray-500">
-              ↓ Diurutkan berdasarkan: Waktu input hutang terbaru → Saldo tertinggi → Nama kontak
+              ↓ Diurutkan berdasarkan:
             </p>
+            <div className="flex items-center space-x-2">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="lastDebtTime">Waktu Input Hutang Terbaru</option>
+                <option value="netBalance">Saldo Tertinggi</option>
+                <option value="contactName">Nama Kontak (A-Z)</option>
+                <option value="lastPaymentDate">Waktu Bayar Terakhir</option>
+                <option value="debtCount">Jumlah Transaksi Terbanyak</option>
+              </select>
+            </div>
           </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
