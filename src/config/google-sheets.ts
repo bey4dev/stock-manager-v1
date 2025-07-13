@@ -32,8 +32,8 @@ export const GOOGLE_CONFIG = {
     CONTACTS: 'Contacts!A:J',       // ID, Name, Type, Email, Phone, Address, Company, Notes, CreatedAt, UpdatedAt
     DEBTS: 'Debts!A:R',             // ID, ContactID, ContactName, ContactType, Type, Description, Amount, ProductID, ProductName, Quantity, Status, TotalAmount, PaidAmount, RemainingAmount, DueDate, CreatedAt, UpdatedAt, Notes
     DEBT_PAYMENTS: 'DebtPayments!A:H', // ID, DebtID, Type, Amount, Quantity, PaymentDate, Notes, CreatedAt
-    DASHBOARD: 'Dashboard!A:B',      // Key, Value pairs for metrics
-    STATUS_HUTANG: 'StatusHutang!A:K' // ContactID, ContactName, ContactType, TotalHutang, TotalBayar, SisaHutang, Status, TerakhirHutang, TerakhirBayar, CreatedAt, UpdatedAt
+    DASHBOARD: 'Dashboard!A:B',     // Key, Value pairs for metrics
+    STATUS_HUTANG: 'StatusHutang!A:L' // ContactID, ContactName, ContactType, TotalHutang, TotalTerbayar, SisaHutang, SaldoBersih, Status, TerakhirHutang, TerakhirBayar, CreatedAt, UpdatedAt
   }
 };
 

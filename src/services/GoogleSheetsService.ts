@@ -1280,7 +1280,8 @@ class GoogleSheetsService {
       [GOOGLE_CONFIG.SHEETS.CONTACTS]: ['ID', 'Name', 'Type', 'Email', 'Phone', 'Address', 'Company', 'Notes', 'CreatedAt', 'UpdatedAt'],
       [GOOGLE_CONFIG.SHEETS.DEBTS]: ['ID', 'ContactID', 'ContactName', 'ContactType', 'Type', 'Description', 'Amount', 'ProductID', 'ProductName', 'Quantity', 'Status', 'TotalAmount', 'PaidAmount', 'RemainingAmount', 'DueDate', 'CreatedAt', 'UpdatedAt', 'Notes'],
       [GOOGLE_CONFIG.SHEETS.DEBT_PAYMENTS]: ['ID', 'DebtID', 'Type', 'Amount', 'Quantity', 'PaymentDate', 'Notes', 'CreatedAt'],
-      [GOOGLE_CONFIG.SHEETS.DASHBOARD]: ['Key', 'Value']
+      [GOOGLE_CONFIG.SHEETS.DASHBOARD]: ['Key', 'Value'],
+      [GOOGLE_CONFIG.SHEETS.STATUS_HUTANG]: ['ContactID', 'ContactName', 'ContactType', 'TotalHutang', 'TotalTerbayar', 'SisaHutang', 'SaldoBersih', 'Status', 'TerakhirHutang', 'TerakhirBayar', 'CreatedAt', 'UpdatedAt']
     };
 
     for (const [sheetName, headers] of Object.entries(sheetHeaders)) {
@@ -1549,6 +1550,79 @@ class GoogleSheetsService {
   //     throw error;
   //   }
   // }
+
+  // Update status hutang untuk contact di Google Sheets
+  async updateStatusHutang(contactData: {
+    contactId: string;
+    contactName: string;
+    contactType: string;
+    totalHutang: number;
+    totalTerbayar: number;
+    sisaHutang: number;
+    saldoBersih: number;
+    status: string;
+    terakhirHutang?: string;
+    terakhirBayar?: string;
+  }): Promise<boolean> {
+    console.log('🔄 Updating StatusHutang for contact:', contactData.contactName);
+    
+    try {
+      return await this.retryWithFreshToken(async () => {
+        // Get or create StatusHutang sheet data
+        const response = await this.getSheetData('StatusHutang');
+        const rows = response.data || [];
+        const dataRows = rows.slice(1); // Skip header
+        
+        // Find existing record
+        const existingRowIndex = dataRows.findIndex((row: any[]) => {
+          const existingContactId = row[0]?.toString().trim();
+          const searchContactId = contactData.contactId?.toString().trim();
+          return existingContactId === searchContactId;
+        });
+        
+        const currentTime = new Date().toLocaleString('id-ID', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        const rowData = [
+          contactData.contactId,
+          contactData.contactName,
+          contactData.contactType,
+          contactData.totalHutang,
+          contactData.totalTerbayar,
+          contactData.sisaHutang,
+          contactData.saldoBersih,
+          contactData.status,
+          contactData.terakhirHutang || currentTime,
+          contactData.terakhirBayar || '',
+          existingRowIndex >= 0 ? dataRows[existingRowIndex][10] || currentTime : currentTime, // Created At
+          currentTime // Updated At
+        ];
+        
+        if (existingRowIndex >= 0) {
+          // Update existing record
+          const rowNumber = existingRowIndex + 2; // +1 for 0-based index, +1 for header row
+          const updateResult = await this.updateSheetRow('StatusHutang', rowNumber, rowData);
+          console.log(`✅ Updated existing StatusHutang record for ${contactData.contactName}`);
+          return updateResult.success;
+        } else {
+          // Append new record
+          const appendResult = await this.appendToSheet('StatusHutang', [rowData]);
+          console.log(`✅ Created new StatusHutang record for ${contactData.contactName}`);
+          return appendResult.success;
+        }
+      });
+    } catch (error: any) {
+      console.error('❌ Error updating StatusHutang:', error);
+      return false;
+    }
+  }
 }
 
 // Export singleton instance
