@@ -85,6 +85,8 @@ export interface UserProfile {
 class GoogleSheetsService {
   private tokenClient: any = null;
   private isAuthenticated = false;
+  private tokenRefreshTimer: number | null = null;
+  private readonly TOKEN_REFRESH_BUFFER = 10 * 60 * 1000; // 10 minutes before expiry
 
   constructor() {
     this.initGoogleAPI();
@@ -210,13 +212,24 @@ class GoogleSheetsService {
               this.isAuthenticated = true;
               console.log('✅ Token restored from localStorage');
               
-              // Enhanced token validation with network error handling
-              const isValid = await this.validateToken(tokenData);
-              if (isValid) {
-                console.log('✅ Token validation successful');
-                return true;
-              } else {
-                console.warn('⚠️ Token validation failed, will need fresh auth');
+              // Test the token by making a simple API call
+              try {
+                const testResponse = await window.gapi.client.request({
+                  'path': 'https://www.googleapis.com/oauth2/v2/userinfo'
+                });
+                if (testResponse.status === 200) {
+                  console.log('✅ Token validation successful');
+                  
+                  // Schedule auto-refresh for existing valid token
+                  this.scheduleTokenRefresh(tokenData);
+                  
+                  return true;
+                } else {
+                  console.warn('⚠️ Token validation failed, status:', testResponse.status);
+                  throw new Error('Invalid token');
+                }
+              } catch (testError) {
+                console.warn('⚠️ Token test failed:', testError);
                 localStorage.removeItem('google_oauth_token');
                 this.isAuthenticated = false;
                 return false;
@@ -328,6 +341,9 @@ class GoogleSheetsService {
                 console.error('❌ Error during sheets setup:', setupError);
               });
               
+              // Schedule automatic token refresh
+              this.scheduleTokenRefresh(tokenWithTimestamp);
+              
               console.log('✅ Authentication successful');
               resolve(true);
             } catch (tokenSetError) {
@@ -377,6 +393,13 @@ class GoogleSheetsService {
   async signOut(): Promise<void> {
     console.log('🚪 Signing out...');
     this.isAuthenticated = false;
+    
+    // Clear auto-refresh timer
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+      console.log('⏰ Cleared token refresh timer');
+    }
     
     try {
       const token = window.gapi.client.getToken();
@@ -498,7 +521,7 @@ class GoogleSheetsService {
     console.log('📊 Fetching products from Google Sheets...');
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
           console.error('❌ Google Sheets API not initialized');
           throw new Error('Google Sheets API not initialized');
@@ -674,7 +697,7 @@ class GoogleSheetsService {
     console.log('📈 Fetching sales from Google Sheets...');
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         const response = await window.gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
           range: GOOGLE_CONFIG.RANGES.SALES,
@@ -785,7 +808,7 @@ class GoogleSheetsService {
     console.log('🛒 Fetching purchases from Google Sheets...');
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         const response = await window.gapi.client.sheets.spreadsheets.values.get({
           spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
           range: GOOGLE_CONFIG.RANGES.PURCHASES,
@@ -1059,7 +1082,7 @@ class GoogleSheetsService {
     console.log(`📊 Fetching data from sheet: ${sheetName}`);
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
           console.error('❌ Google Sheets API not initialized');
           throw new Error('Google Sheets API not initialized');
@@ -1087,10 +1110,9 @@ class GoogleSheetsService {
 
   async appendToSheet(sheetName: string, rows: any[][]): Promise<{ success: boolean }> {
     console.log(`📝 Appending ${rows.length} rows to ${sheetName}`);
-    console.log(`[DEBUG APPEND] Rows to append:`, rows);
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
           console.error('❌ Google Sheets API not initialized');
           throw new Error('Google Sheets API not initialized');
@@ -1106,7 +1128,6 @@ class GoogleSheetsService {
         });
 
         console.log(`✅ Successfully appended to ${sheetName}:`, response);
-        console.log(`[DEBUG APPEND] Response result:`, response.result);
         return { success: true };
       });
     } catch (error) {
@@ -1119,7 +1140,7 @@ class GoogleSheetsService {
     console.log(`📝 Updating row ${rowIndex} in ${sheetName}`);
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
           console.error('❌ Google Sheets API not initialized');
           throw new Error('Google Sheets API not initialized');
@@ -1148,7 +1169,7 @@ class GoogleSheetsService {
     console.log(`🗑️ Deleting row ${rowIndex} from ${sheetName}`);
 
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
+      return await this.retryWithFreshToken(async () => {
         if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
           console.error('❌ Google Sheets API not initialized');
           throw new Error('Google Sheets API not initialized');
@@ -1259,8 +1280,7 @@ class GoogleSheetsService {
       [GOOGLE_CONFIG.SHEETS.CONTACTS]: ['ID', 'Name', 'Type', 'Email', 'Phone', 'Address', 'Company', 'Notes', 'CreatedAt', 'UpdatedAt'],
       [GOOGLE_CONFIG.SHEETS.DEBTS]: ['ID', 'ContactID', 'ContactName', 'ContactType', 'Type', 'Description', 'Amount', 'ProductID', 'ProductName', 'Quantity', 'Status', 'TotalAmount', 'PaidAmount', 'RemainingAmount', 'DueDate', 'CreatedAt', 'UpdatedAt', 'Notes'],
       [GOOGLE_CONFIG.SHEETS.DEBT_PAYMENTS]: ['ID', 'DebtID', 'Type', 'Amount', 'Quantity', 'PaymentDate', 'Notes', 'CreatedAt'],
-      [GOOGLE_CONFIG.SHEETS.DASHBOARD]: ['Key', 'Value'],
-      [GOOGLE_CONFIG.SHEETS.STATUS_HUTANG]: ['Contact ID', 'Nama Kontak', 'Tipe Kontak', 'Total Hutang', 'Total Terbayar', 'Sisa Hutang', 'Saldo Bersih', 'Status', 'Terakhir Hutang', 'Terakhir Bayar', 'Created At', 'Updated At']
+      [GOOGLE_CONFIG.SHEETS.DASHBOARD]: ['Key', 'Value']
     };
 
     for (const [sheetName, headers] of Object.entries(sheetHeaders)) {
@@ -1293,374 +1313,241 @@ class GoogleSheetsService {
     }
   }
 
-  // Method untuk memastikan StatusHutang sheet exists
-  async ensureStatusHutangSheet(): Promise<boolean> {
-    console.log('🔍 Ensuring StatusHutang sheet exists...');
-    
+  // Helper method to retry API calls with fresh token
+  private async retryWithFreshToken<T>(apiCall: () => Promise<T>, maxRetries: number = 1): Promise<T> {
     try {
-      return await this.makeAPICallWithAutoRefresh(async () => {
-        if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
-          console.error('❌ Google Sheets API not initialized');
-          throw new Error('Google Sheets API not initialized');
-        }
-
-        // Get existing sheets
-        const response = await window.gapi.client.sheets.spreadsheets.get({
-          spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID
-        });
-        
-        const existingSheets = response.result.sheets?.map((sheet: any) => sheet.properties?.title) || [];
-        const statusHutangExists = existingSheets.includes('StatusHutang');
-        
-        if (statusHutangExists) {
-          console.log('✅ StatusHutang sheet already exists');
-          return true;
-        }
-        
-        console.log('📝 Creating StatusHutang sheet...');
-        
-        // Create StatusHutang sheet
-        await window.gapi.client.sheets.spreadsheets.batchUpdate({
-          spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-          resource: {
-            requests: [{
-              addSheet: {
-                properties: {
-                  title: 'StatusHutang'
-                }
-              }
-            }]
-          }
-        });
-        
-        console.log('✅ StatusHutang sheet created successfully');
-        
-        // Add headers to the new sheet
-        const headers = [
-          'Contact ID',
-          'Nama Kontak', 
-          'Tipe Kontak',
-          'Total Hutang',
-          'Total Terbayar',
-          'Sisa Hutang',
-          'Saldo Bersih',
-          'Status',
-          'Terakhir Hutang',
-          'Terakhir Bayar',
-          'Created At',
-          'Updated At'
-        ];
-        
-        await window.gapi.client.sheets.spreadsheets.values.update({
-          spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-          range: 'StatusHutang!A1:L1',
-          valueInputOption: 'RAW',
-          resource: {
-            values: [headers]
-          }
-        });
-        
-        console.log('✅ StatusHutang sheet headers added');
-        return true;
-      });
-    } catch (error) {
-      console.error('❌ Error ensuring StatusHutang sheet:', error);
-      return false;
-    }
-  }
-
-  // Method untuk update atau create status hutang contact
-  async updateStatusHutang(contactData: {
-    contactId: string;
-    contactName: string;
-    contactType: string;
-    totalHutang: number;
-    totalTerbayar: number;
-    sisaHutang: number;
-    saldoBersih: number;
-    status: string;
-    terakhirHutang?: string;
-    terakhirBayar?: string;
-  }): Promise<boolean> {
-    console.log('🔄 Updating StatusHutang for contact:', contactData.contactName);
-    console.log('[DEBUG updateStatusHutang] Input data:', contactData);
-    
-    try {
-      // Ensure sheet exists first
-      await this.ensureStatusHutangSheet();
-      
-      // Get existing data
-      const response = await window.gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-        range: 'StatusHutang!A:L'
-      });
-
-      const rows = response.result.values || [];
-      const dataRows = rows.slice(1);
-      
-      console.log('[DEBUG updateStatusHutang] Existing data rows:', dataRows.length);
-      
-      // Find existing record
-      const existingRowIndex = dataRows.findIndex((row: any[]) => {
-        const existingContactId = row[0]?.toString().trim();
-        const searchContactId = contactData.contactId?.toString().trim();
-        return existingContactId === searchContactId;
-      });
-      console.log('[DEBUG updateStatusHutang] Existing row index for', contactData.contactId, ':', existingRowIndex);
-      
-      // Validate contactData
-      if (!contactData.contactId || !contactData.contactName) {
-        console.error('[DEBUG updateStatusHutang] Invalid contact data - missing required fields:', contactData);
-        return false;
-      }
-      
-      const currentTime = new Date().toLocaleString('id-ID', {
-        timeZone: 'Asia/Jakarta',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      
-      const rowData = [
-        contactData.contactId,
-        contactData.contactName,
-        contactData.contactType,
-        contactData.totalHutang,
-        contactData.totalTerbayar,
-        contactData.sisaHutang,
-        contactData.saldoBersih,
-        contactData.status,
-        contactData.terakhirHutang || currentTime,
-        contactData.terakhirBayar || '',
-        existingRowIndex >= 0 ? dataRows[existingRowIndex][10] || currentTime : currentTime, // Created At
-        currentTime // Updated At
-      ];
-      
-      console.log('[DEBUG updateStatusHutang] Row data to send:', rowData);
-      
-      if (existingRowIndex >= 0) {
-        // Update existing record
-        const rowNumber = existingRowIndex + 2; // +1 for 0-based index, +1 for header row
-        console.log('[DEBUG updateStatusHutang] Updating existing record at row:', rowNumber);
-        
-        await window.gapi.client.sheets.spreadsheets.values.update({
-          spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-          range: `StatusHutang!A${rowNumber}:L${rowNumber}`,
-          valueInputOption: 'RAW',
-          resource: {
-            values: [rowData]
-          }
-        });
-        console.log(`✅ Updated existing StatusHutang record for ${contactData.contactName}`);
-      } else {
-        // Append new record
-        console.log('[DEBUG updateStatusHutang] Creating new record');
-        
-        await window.gapi.client.sheets.spreadsheets.values.append({
-          spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-          range: 'StatusHutang!A:L',
-          valueInputOption: 'RAW',
-          insertDataOption: 'INSERT_ROWS',
-          resource: {
-            values: [rowData]
-          }
-        });
-        console.log(`✅ Created new StatusHutang record for ${contactData.contactName}`);
-      }
-        
-        return true;
-        
+      return await apiCall();
     } catch (error: any) {
-      console.error('❌ Error updating StatusHutang:', error);
-      return false;
+      console.log('🔄 API call failed, checking if retry is needed:', error);
+      
+      // Check if it's a 403 or authentication error
+      if (maxRetries > 0 && (error.status === 403 || error.status === 401)) {
+        console.log('🔄 Authentication error detected, attempting auto-refresh...');
+        
+        try {
+          // Try automatic token refresh
+          const refreshed = await this.refreshTokenAutomatically();
+          
+          if (refreshed) {
+            console.log('✅ Token refreshed successfully, retrying API call...');
+            return await apiCall();
+          } else {
+            console.log('❌ Auto-refresh failed, clearing auth state');
+            this.isAuthenticated = false;
+            localStorage.removeItem('google_oauth_token');
+            throw new Error('Authentication failed - please login again');
+          }
+        } catch (retryError) {
+          console.log('❌ Retry failed:', retryError);
+          throw error; // Return original error
+        }
+      } else {
+        throw error;
+      }
     }
   }
 
   // Helper method to check if token is expired
-  private isTokenExpired(tokenData: any): boolean {
-    if (!tokenData.timestamp || !tokenData.expires_in) {
-      return true; // Assume expired if no timestamp or expiry info
+  private isTokenExpired(token: any): boolean {
+    if (!token) {
+      console.log('🔍 Token expiry check: No token provided');
+      return true;
     }
     
     const now = Date.now();
-    const tokenAge = now - tokenData.timestamp;
-    const expiryTime = tokenData.expires_in * 1000; // Convert to milliseconds
+    let expiresAt = 0;
     
-    // Consider token expired if it's 80% of the way to expiry (was 90%, now more conservative)
-    // This gives more buffer time before actual expiry
-    return tokenAge >= (expiryTime * 0.8);
+    // Handle different token formats
+    if (token.expires_at) {
+      // Unix timestamp in seconds
+      expiresAt = parseInt(token.expires_at) * 1000;
+    } else if (token.expires_in && token.created_at) {
+      // expires_in (seconds) + created_at
+      expiresAt = parseInt(token.created_at) + (parseInt(token.expires_in) * 1000);
+    } else if (token.expires_in) {
+      // Assume created_at is now if not provided
+      const createdAt = token.timestamp || now;
+      expiresAt = createdAt + (parseInt(token.expires_in) * 1000);
+    } else {
+      // No expiry info, check if token is recent (less than 1 hour old)
+      const tokenAge = now - (token.timestamp || 0);
+      const maxAge = 60 * 60 * 1000; // 1 hour
+      const isOld = tokenAge > maxAge;
+      console.log(`🔍 Token age check: age=${tokenAge}ms, maxAge=${maxAge}ms, isOld=${isOld}`);
+      return isOld;
+    }
+    
+    const isExpired = now >= expiresAt;
+    const timeLeft = Math.max(0, expiresAt - now);
+    
+    console.log(`🔍 Token expiry check: now=${now}, expires=${expiresAt}, expired=${isExpired}, timeLeft=${Math.round(timeLeft/1000/60)}min`);
+    return isExpired;
   }
 
-  // Enhanced token validation with retry
-  private async validateToken(_tokenData: any): Promise<boolean> {
+  // Auto-refresh token before it expires
+  private async refreshTokenAutomatically(): Promise<boolean> {
     try {
-      console.log('🔍 [TOKEN] Validating token with API call...');
+      console.log('🔄 Attempting automatic token refresh...');
       
-      // Quick test API call to verify token is still valid
-      const testResponse = await window.gapi.client.request({
-        'path': 'https://www.googleapis.com/oauth2/v2/userinfo'
-      });
-      
-      if (testResponse.status === 200) {
-        console.log('✅ [TOKEN] Token validation successful');
-        return true;
-      } else {
-        console.warn('⚠️ [TOKEN] Token validation failed, status:', testResponse.status);
+      if (!this.tokenClient) {
+        console.log('⚠️ Token client not available for refresh');
         return false;
       }
-    } catch (error: any) {
-      console.warn('⚠️ [TOKEN] Token validation error:', error);
       
-      // Check if it's a network error vs auth error
-      if (error?.status === 401 || error?.status === 403) {
-        console.log('🔑 [TOKEN] Authentication error - token invalid');
-        return false;
-      } else {
-        console.log('🌐 [TOKEN] Network error - assume token still valid');
-        return true; // Don't invalidate token for network issues
-      }
-    }
-  }
-
-  // Enhanced auto-refresh wrapper for all API calls
-  private async makeAPICallWithAutoRefresh<T>(operation: () => Promise<T>): Promise<T> {
-    const maxRetries = 3;
-    let retryCount = 0;
-    
-    while (retryCount <= maxRetries) {
-      try {
-        // Add delay for retries to avoid rate limiting
-        if (retryCount > 0) {
-          const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 2s, 4s, 8s
-          console.log(`⏳ Rate limit retry ${retryCount}/${maxRetries}, waiting ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
+      return new Promise((resolve) => {
+        // Save original callback
+        const originalCallback = this.tokenClient.callback;
         
-        return await operation();
-      } catch (error: any) {
-        console.warn(`🔄 API call failed (attempt ${retryCount + 1}/${maxRetries + 1}):`, error);
-        
-        // Check for rate limiting (429 error)
-        const isRateLimited = error?.status === 429 || 
-                             error?.result?.error?.code === 429 ||
-                             error?.message?.includes('Too Many Requests') ||
-                             error?.result?.error?.message?.includes('Quota exceeded');
-        
-        if (isRateLimited && retryCount < maxRetries) {
-          console.log(`🚦 Rate limit detected, retrying in exponential backoff...`);
-          retryCount++;
-          continue; // Retry with exponential backoff
-        }
-        
-        // Check if this is an auth error that could benefit from token refresh
-        const isAuthError = error?.status === 401 || 
-                           error?.status === 403 || 
-                           (error?.result?.error?.status === 'UNAUTHENTICATED') ||
-                           (error?.result?.error?.message?.includes('Invalid Credentials')) ||
-                           (error?.result?.error?.code === 401) ||
-                           (error?.result?.error?.code === 403);
-        
-        if (isAuthError && retryCount === 0) { // Only try auth refresh once
-          console.log('🔑 Authentication error detected, attempting silent refresh...');
-          
-          try {
-            // Clear current token
-            window.gapi.client.setToken('');
-            localStorage.removeItem('google_oauth_token');
+        // Set temporary callback for refresh
+        this.tokenClient.callback = (response: any) => {
+          if (response.access_token) {
+            const tokenWithTimestamp = {
+              ...response,
+              timestamp: Date.now()
+            };
             
-            // Try silent refresh first
-            const refreshSuccess = await this.silentRefresh();
+            // Update localStorage
+            localStorage.setItem('google_oauth_token', JSON.stringify(tokenWithTimestamp));
             
-            if (refreshSuccess) {
-              console.log('✅ Silent refresh successful, retrying operation...');
-              await new Promise(resolve => setTimeout(resolve, 500));
-              retryCount++;
-              continue; // Retry after auth refresh
-            } else {
-              console.log('❌ Silent refresh failed, user needs to re-authenticate');
-              this.isAuthenticated = false;
-              throw new Error('AUTHENTICATION_REQUIRED');
-            }
-          } catch (refreshError) {
-            console.error('❌ Token refresh failed:', refreshError);
-            this.isAuthenticated = false;
-            throw new Error('AUTHENTICATION_REQUIRED');
-          }
-        } else {
-          // Not an auth error or rate limit, or max retries reached
-          console.log('🌐 Non-recoverable error or max retries reached, rethrowing original error');
-          throw error;
-        }
-      }
-    }
-    
-    // This should never be reached, but TypeScript requires it
-    throw new Error('Max retries exceeded');
-  }
-
-  // Silent refresh method - try to refresh without user interaction
-  private async silentRefresh(): Promise<boolean> {
-    return new Promise((resolve) => {
-      try {
-        if (!this.tokenClient) {
-          console.log('❌ No token client available for silent refresh');
-          resolve(false);
-          return;
-        }
-
-        console.log('🔄 Attempting silent token refresh...');
-        
-        this.tokenClient.callback = (tokenResponse: any) => {
-          if (tokenResponse.error) {
-            console.log('❌ Silent refresh failed:', tokenResponse.error);
-            resolve(false);
-            return;
-          }
-          
-          if (tokenResponse.access_token) {
-            console.log('✅ Silent refresh successful');
+            // Update gapi client
+            window.gapi.client.setToken(response);
+            this.isAuthenticated = true;
             
-            try {
-              window.gapi.client.setToken(tokenResponse);
-              this.isAuthenticated = true;
-              
-              // Save the new token
-              const tokenWithTimestamp = {
-                ...tokenResponse,
-                timestamp: Date.now()
-              };
-              localStorage.setItem('google_oauth_token', JSON.stringify(tokenWithTimestamp));
-              
-              resolve(true);
-            } catch (error) {
-              console.error('❌ Error setting refreshed token:', error);
-              resolve(false);
-            }
+            console.log('✅ Token auto-refreshed successfully');
+            
+            // Schedule next refresh
+            this.scheduleTokenRefresh(tokenWithTimestamp);
+            
+            resolve(true);
           } else {
-            console.log('❌ Silent refresh: no access token received');
+            console.log('❌ Auto-refresh failed - no token received');
             resolve(false);
           }
+          
+          // Restore original callback
+          this.tokenClient.callback = originalCallback;
         };
-
-        // Request token silently (without prompt)
-        this.tokenClient.requestAccessToken({ 
-          prompt: '' // Empty prompt for silent refresh
-        });
         
-        // Timeout for silent refresh
-        setTimeout(() => {
-          console.log('⏰ Silent refresh timeout');
+        // Request new token silently (without user interaction)
+        try {
+          this.tokenClient.requestAccessToken({ prompt: '' });
+        } catch (error) {
+          console.error('❌ Error requesting token refresh:', error);
+          this.tokenClient.callback = originalCallback;
           resolve(false);
-        }, 10000); // 10 second timeout
-        
-      } catch (error) {
-        console.error('❌ Silent refresh error:', error);
-        resolve(false);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Auto-refresh error:', error);
+      return false;
+    }
+  }
+
+  // Schedule automatic token refresh
+  private scheduleTokenRefresh(token: any): void {
+    // Clear existing timer
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+
+    if (!token) return;
+
+    const now = Date.now();
+    let refreshTime = 0;
+
+    // Calculate when to refresh (with buffer)
+    if (token.expires_in) {
+      const expiryTime = (token.timestamp || now) + (parseInt(token.expires_in) * 1000);
+      refreshTime = expiryTime - this.TOKEN_REFRESH_BUFFER;
+    } else {
+      // Default: refresh after 50 minutes
+      refreshTime = now + (50 * 60 * 1000);
+    }
+
+    const delay = Math.max(0, refreshTime - now);
+    const delayMinutes = Math.round(delay / 1000 / 60);
+
+    console.log(`⏰ Scheduling token refresh in ${delayMinutes} minutes`);
+
+    this.tokenRefreshTimer = window.setTimeout(async () => {
+      console.log('⏰ Auto-refresh timer triggered');
+      const success = await this.refreshTokenAutomatically();
+      
+      if (!success) {
+        console.log('⚠️ Auto-refresh failed, user will need to re-authenticate');
+        // Clear authentication state
+        this.isAuthenticated = false;
+        localStorage.removeItem('google_oauth_token');
       }
-    });
+    }, delay);
+  }
+
+  // Enhanced token validation with auto-refresh
+  private async ensureValidToken(): Promise<boolean> {
+    const savedToken = localStorage.getItem('google_oauth_token');
+    
+    if (!savedToken) {
+      console.log('🔍 No token found, need authentication');
+      return false;
+    }
+
+    try {
+      const token = JSON.parse(savedToken);
+      
+      if (!token.access_token) {
+        console.log('🔍 Invalid token format, need authentication');
+        return false;
+      }
+
+      // Check if token will expire soon
+      const now = Date.now();
+      const tokenAge = now - (token.timestamp || 0);
+      const maxAge = ((token.expires_in || 3600) * 1000) - this.TOKEN_REFRESH_BUFFER;
+
+      if (tokenAge >= maxAge) {
+        console.log('⏰ Token will expire soon, attempting refresh...');
+        return await this.refreshTokenAutomatically();
+      }
+
+      // Token is still valid
+      return true;
+    } catch (error) {
+      console.error('❌ Error parsing token:', error);
+      localStorage.removeItem('google_oauth_token');
+      return false;
+    }
+  }
+
+  // Enhanced API request wrapper with auto-retry
+  private async makeAuthenticatedRequest<T>(requestFn: () => Promise<T>): Promise<T> {
+    try {
+      // Ensure token is valid before request
+      if (!await this.ensureValidToken()) {
+        throw new Error('Token validation failed - authentication required');
+      }
+
+      // Make the request
+      return await requestFn();
+    } catch (error: any) {
+      // Handle authentication errors
+      if (error.status === 401 || error.status === 403) {
+        console.log('🔄 Auth error detected, trying to refresh token...');
+        
+        const refreshed = await this.refreshTokenAutomatically();
+        if (refreshed) {
+          console.log('✅ Token refreshed, retrying request...');
+          return await requestFn(); // Retry once
+        } else {
+          console.log('❌ Token refresh failed, clearing auth state');
+          this.isAuthenticated = false;
+          localStorage.removeItem('google_oauth_token');
+          throw new Error('Authentication failed - please login again');
+        }
+      }
+      
+      throw error;
+    }
   }
 }
 

@@ -28,6 +28,7 @@ interface Contact {
   id: string;
   name: string;
   type: 'customer' | 'supplier';
+  phone?: string; // Added for WhatsApp feature
 }
 
 interface Product {
@@ -167,6 +168,58 @@ const Debts = () => {
     }).format(amount);
   };
 
+  // WhatsApp helper function untuk ringkasan kontak
+  const sendWhatsAppMessage = (contactName: string, phone: string, summary: any) => {
+    if (!phone) {
+      showAlertModal('Error', `Nomor WhatsApp tidak tersedia untuk ${contactName}. Silakan tambahkan nomor di data kontak.`, 'error');
+      return;
+    }
+
+    const phoneNumber = phone.replace(/\D/g, ''); // Remove non-digits
+    if (!phoneNumber) {
+      showAlertModal('Error', 'Format nomor WhatsApp tidak valid', 'error');
+      return;
+    }
+
+    let message = `Halo ${contactName},\n\n`;
+    
+    // Cek apakah customer memiliki hutang atau titip uang
+    if (summary.netBalance > 0) {
+      // Customer memiliki hutang bersih
+      message += `Kami mengingatkan bahwa Anda memiliki hutang bersih sebesar ${formatCurrency(summary.netBalance)}.\n\n`;
+      message += `Rincian:\n`;
+      message += `- Total hutang: ${formatCurrency(summary.totalDebt)}\n`;
+      if (summary.titipUang > 0) {
+        message += `- Saldo titip uang: ${formatCurrency(summary.titipUang)}\n`;
+      }
+      if (summary.titipBarang > 0) {
+        message += `- Nilai titip barang: ${formatCurrency(summary.titipBarang)}\n`;
+      }
+      message += `- Hutang bersih: ${formatCurrency(summary.netBalance)}\n\n`;
+      message += `Mohon untuk melakukan pembayaran secepatnya atau hubungi kami untuk membahas jadwal pembayaran.\n\n`;
+    } else if (summary.netBalance < 0) {
+      // Customer memiliki saldo kredit (titip uang berlebih)
+      const creditAmount = Math.abs(summary.netBalance);
+      message += `Kami ingin menginformasikan bahwa Anda memiliki saldo kredit sebesar ${formatCurrency(creditAmount)} di toko kami.\n\n`;
+      message += `Saldo ini dapat digunakan untuk:\n`;
+      message += `- Pembayaran hutang berikutnya\n`;
+      message += `- Pembelian barang\n`;
+      message += `- Dapat diambil kembali kapan saja\n\n`;
+      message += `Silakan hubungi kami jika ingin menggunakan atau mengambil saldo tersebut.\n\n`;
+    } else {
+      // Customer lunas
+      message += `Terima kasih! Status hutang Anda saat ini: LUNAS ✓\n\n`;
+      message += `Kami menghargai kepercayaan dan kerjasama Anda.\n\n`;
+    }
+    
+    message += `Terima kasih atas perhatiannya.\n\n`;
+    message += `- Tim Stock Manager`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const waUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(waUrl, '_blank');
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -258,12 +311,17 @@ const Debts = () => {
   const loadContacts = async () => {
     try {
       const response = await GoogleSheetsService.getSheetData('Contacts');
+      
       if (response.success && response.data) {
-        const contactsData = response.data.map((row: string[]) => ({
-          id: row[0] || '',
-          name: row[1] || '',
-          type: (row[2] || 'customer') as 'customer' | 'supplier'
-        }));
+        const contactsData = response.data.map((row: string[], index: number) => {
+          return {
+            id: row[0] || '',
+            name: row[1] || '',
+            type: (row[2] || 'customer') as 'customer' | 'supplier',
+            phone: row[4] || '' // Phone dari kolom E (index 4)
+          };
+        });
+        
         setContacts(contactsData);
       }
     } catch (error) {
@@ -2079,6 +2137,21 @@ const Debts = () => {
                             💰 Terima Bayar
                           </button>
                         )}
+                        {/* Tombol WhatsApp untuk semua kontak */}
+                        <button
+                          onClick={() => {
+                            const contact = contacts.find(c => c.name === summary.contactName);
+                            if (contact?.phone) {
+                              sendWhatsAppMessage(summary.contactName, contact.phone, summary);
+                            } else {
+                              showAlertModal('Error', `Nomor WhatsApp tidak tersedia untuk ${summary.contactName}. Silakan tambahkan nomor di data kontak sheet Contacts.`, 'error');
+                            }
+                          }}
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"
+                          title="Kirim Pesan WhatsApp"
+                        >
+                          📱 WhatsApp
+                        </button>
                         {/* Tombol Berikan untuk customer */}
                         {summary.contactType === 'customer' && (
                           <button
