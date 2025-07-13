@@ -26,3 +26,7 @@ dist-ssr
 # Google Service Account Keys
 service-account-key.json
 token.json
+
+# Cleanup scripts
+clean-debug-*.cjs
+clean-debug-*.js
