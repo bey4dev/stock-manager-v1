@@ -1,0 +1,713 @@
+@import "tailwindcss";
+
+/* Custom CSS untuk aplikasi */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1;
+  font-variant-ligatures: common-ligatures;
+}
+
+/* Improve text rendering */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+p, span, div {
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+}
+
+/* Utility classes untuk font yang lebih baik */
+.font-optimized {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display-optimized {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.025em;
+}
+
+/* Fix untuk rendering font yang lebih baik di Windows */
+@media screen and (-webkit-min-device-pixel-ratio: 1.5) {
+  .font-optimized,
+  .font-display-optimized {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+}
+
+/* Perbaikan untuk button text */
+button {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  text-rendering: optimizeLegibility;
+}
+
+/* Perbaikan untuk input text */
+input, select, textarea {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+}
+
+/* Perbaikan khusus untuk dropdown */
+.dropdown-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+/* Perbaikan untuk metric numbers */
+.metric-number {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fix for better font rendering on Windows */
+@media screen and (-webkit-min-device-pixel-ratio: 1.5),
+       screen and (min-resolution: 1.5dppx) {
+  body {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+}
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+/* Fix untuk FilterSummary gradient background - Modern UI */
+.filter-summary-gradient {
+  background: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.8) 0%, 
+    rgba(139, 92, 246, 0.7) 25%,
+    rgba(59, 130, 246, 0.8) 50%,
+    rgba(79, 70, 229, 0.9) 100%
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 
+    0 8px 32px rgba(99, 102, 241, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-summary-gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    transparent 50%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+/* Ensure proper text colors in gradient sections - Modern UI */
+.filter-summary-gradient h2,
+.filter-summary-gradient .text-white {
+  color: white !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.filter-summary-gradient .text-blue-100 {
+  color: rgba(255, 255, 255, 0.85) !important;
+  opacity: 1;
+}
+
+.filter-summary-gradient .text-blue-200 {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1;
+}
+
+.filter-summary-gradient .text-green-300 {
+  color: rgb(110, 231, 183) !important;
+  filter: brightness(1.1);
+}
+
+.filter-summary-gradient .text-yellow-300 {
+  color: rgb(253, 230, 138) !important;
+  filter: brightness(1.1);
+}
+
+/* Fix untuk icon colors - Modern UI */
+.filter-summary-gradient svg {
+  stroke: currentColor;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  position: relative;
+  z-index: 1;
+}
+
+/* Glassmorphism effect untuk cards - Modern UI */
+.filter-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.filter-card:hover::before {
+  opacity: 1;
+}
+
+.filter-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 12px 24px rgba(0, 0, 0, 0.15),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Additional utility classes for consistency - Modern UI */
+.filter-summary-gradient .metric-number {
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+}
+
+.filter-summary-gradient .bg-green-400 {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.filter-summary-gradient .bg-yellow-400 {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%) !important;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+/* Icon container modern styling */
+.filter-summary-gradient .p-2 {
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure proper contrast for small text - Modern UI */
+.filter-summary-gradient .opacity-80 {
+  opacity: 0.8;
+}
+
+.filter-summary-gradient .opacity-90 {
+  opacity: 0.9;
+}
+
+/* Modern border styling */
+.filter-summary-gradient .border-t {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ========================================================================================
+   MOBILE RESPONSIVE DESIGN ENHANCEMENTS
+   ======================================================================================== */
+
+/* Safe area for iPhone X and newer models */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+}
+
+/* Mobile viewport meta fixes */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+
+/* Improve touch interactions on mobile */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Better scrolling on iOS */
+body {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Touch target improvements - minimum 44px for accessibility */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile-first button sizing */
+@media (max-width: 768px) {
+  button, .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 16px;
+  }
+}
+
+/* Mobile container improvements */
+.mobile-container {
+  padding-left: max(16px, var(--safe-area-inset-left));
+  padding-right: max(16px, var(--safe-area-inset-right));
+  padding-top: max(8px, var(--safe-area-inset-top));
+  padding-bottom: max(8px, var(--safe-area-inset-bottom));
+}
+
+/* Mobile card improvements */
+@media (max-width: 768px) {
+  .card-mobile {
+    margin: 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: white;
+    overflow: hidden;
+  }
+  
+  .card-mobile-header {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  }
+  
+  .card-mobile-content {
+    padding: 16px;
+  }
+  
+  .card-mobile-actions {
+    padding: 12px 16px;
+    border-top: 1px solid #f3f4f6;
+    background: #fafbfc;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+/* Mobile table alternatives - horizontal scroll cards */
+@media (max-width: 768px) {
+  .mobile-table-card {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .mobile-table-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .mobile-table-row {
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  
+  .mobile-table-row:last-child {
+    border-bottom: none;
+  }
+  
+  .mobile-table-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  
+  .mobile-table-label {
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .mobile-table-value {
+    font-weight: 600;
+    color: #111827;
+    text-align: right;
+  }
+}
+
+/* Mobile grid improvements */
+@media (max-width: 640px) {
+  .mobile-grid-1 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .mobile-grid-2 {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* Mobile navigation improvements */
+@media (max-width: 768px) {
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 8px 0;
+    padding-bottom: max(8px, var(--safe-area-inset-bottom));
+    z-index: 50;
+  }
+  
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  
+  .mobile-nav-item.active {
+    color: #3b82f6;
+  }
+  
+  .mobile-nav-item:hover {
+    color: #1d4ed8;
+  }
+  
+  .mobile-nav-icon {
+    width: 20px;
+    height: 20px;
+    margin-bottom: 4px;
+  }
+}
+
+/* Mobile modal improvements */
+@media (max-width: 768px) {
+  .mobile-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  
+  .mobile-modal-content {
+    background: white;
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    transform: translateY(0);
+    transition: transform 0.3s ease-out;
+  }
+  
+  .mobile-modal-header {
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    position: relative;
+  }
+  
+  .mobile-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    margin: 0;
+  }
+  
+  .mobile-modal-close {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+  }
+  
+  .mobile-modal-body {
+    padding: 16px;
+    max-height: calc(90vh - 120px);
+    overflow-y: auto;
+  }
+  
+  .mobile-modal-footer {
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    background: #fafbfc;
+  }
+}
+
+/* Mobile form improvements */
+@media (max-width: 768px) {
+  .mobile-form-group {
+    margin-bottom: 16px;
+  }
+  
+  .mobile-form-label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .mobile-form-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .mobile-form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .mobile-form-button {
+    width: 100%;
+    min-height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 16px;
+    transition: all 0.2s;
+  }
+  
+  .mobile-form-button:active {
+    transform: translateY(1px);
+  }
+  
+  .mobile-form-button-secondary {
+    background: #f3f4f6;
+    color: #374151;
+  }
+}
+
+/* Mobile stats card improvements */
+@media (max-width: 768px) {
+  .mobile-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+  }
+  
+  .mobile-stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  
+  .mobile-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+  }
+  
+  .mobile-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin: 8px 0;
+  }
+  
+  .mobile-stat-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .mobile-stat-change {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  
+  .mobile-stat-change.positive {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  .mobile-stat-change.negative {
+    background: #fecaca;
+    color: #991b1b;
+  }
+}
+
+/* Mobile loading states */
+@media (max-width: 768px) {
+  .mobile-loading {
+    padding: 40px 20px;
+    text-align: center;
+  }
+  
+  .mobile-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+}
+
+/* Mobile empty states */
+@media (max-width: 768px) {
+  .mobile-empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+  }
+  
+  .mobile-empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    opacity: 0.5;
+  }
+  
+  .mobile-empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+  
+  .mobile-empty-description {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 20px;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-modal-content {
+    max-height: 80vh;
+  }
+  
+  .mobile-modal-body {
+    max-height: calc(80vh - 120px);
+  }
+}
+
+/* Very small screens (< 320px) */
+@media (max-width: 320px) {
+  .mobile-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .mobile-stat-card {
+    padding: 12px;
+  }
+  
+  .mobile-form-input {
+    padding: 10px 12px;
+  }
+}
+
+/* ========================================================================================
+   END MOBILE RESPONSIVE DESIGN ENHANCEMENTS
+   ======================================================================================== */

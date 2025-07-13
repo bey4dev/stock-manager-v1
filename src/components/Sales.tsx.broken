@@ -1,0 +1,515 @@
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../contexts/AppContext';
+import {
+  Plus,
+  Search,
+  TrendingUp,
+  Eye,
+  Filter,
+  Download,
+  Calendar,
+  DollarSign,
+  Package,
+  User,
+  X
+} from 'lucide-react';
+
+export default function Sales() {
+  const { state, addSale } = useApp();
+  const { sales, products, loading } = state;
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [productFilter, setProductFilter] = useState('all');
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    product: '',
+    quantity: '',
+    customer: ''
+  });
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('🔍 [SALES] State changed:', {
+      showModal,
+      loading,
+      productsCount: products.length,
+      salesCount: sales.length,
+      isAuthenticated: state.isAuthenticated
+    });
+  }, [showModal, loading, products.length, sales.length, state.isAuthenticated]);
+
+  useEffect(() => {
+    console.log('🔍 [SALES] Modal state changed:', showModal);
+  }, [showModal]);
+
+  const filteredSales = sales.filter(sale => {
+    const matchesSearch = sale.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         sale.product.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesProduct = productFilter === 'all' || sale.product === productFilter;
+    
+    let matchesDate = true;
+    if (dateFilter !== 'all') {
+      const saleDate = new Date(sale.date);
+      const today = new Date();
+      const daysDiff = Math.floor((today.getTime() - saleDate.getTime()) / (1000 * 3600 * 24));
+      
+      switch(dateFilter) {
+        case 'today':
+          matchesDate = daysDiff === 0;
+          break;
+        case 'week':
+          matchesDate = daysDiff <= 7;
+          break;
+        case 'month':
+          matchesDate = daysDiff <= 30;
+          break;
+      }
+    }
+    
+    return matchesSearch && matchesProduct && matchesDate;
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('📋 [SALES] Form submitted:', formData);
+    
+    try {
+      // Validation
+      if (!formData.product || !formData.quantity || !formData.customer) {
+        alert('Semua field harus diisi');
+        return;
+      }
+
+      const selectedProduct = products.find(p => p.name === formData.product);
+      if (!selectedProduct) {
+        console.error('❌ [SALES] Product not found:', formData.product);
+        alert('Pilih produk yang valid');
+        return;
+      }
+
+      const quantity = parseInt(formData.quantity);
+      if (isNaN(quantity) || quantity <= 0) {
+        alert('Kuantitas harus berupa angka positif');
+        return;
+      }
+
+      const saleData = {
+        date: formData.date,
+        product: formData.product,
+        quantity: quantity,
+        price: selectedProduct.price,
+        total: selectedProduct.price * quantity,
+        customer: formData.customer.trim()
+      };
+
+      console.log('💾 [SALES] Saving sale data:', saleData);
+      
+      const success = await addSale(saleData);
+      if (success) {
+        console.log('✅ [SALES] Sale added successfully');
+        resetForm();
+        setShowModal(false);
+        alert('Penjualan berhasil ditambahkan!');
+      } else {
+        console.error('❌ [SALES] Failed to add sale');
+        alert('Gagal menambah penjualan. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('❌ [SALES] Error adding sale:', error);
+      alert('Gagal menambah penjualan. Silakan coba lagi.');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      product: '',
+      quantity: '',
+      customer: ''
+    });
+  };
+
+  const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
+  const totalQuantity = filteredSales.reduce((sum, sale) => sum + sale.quantity, 0);
+  const averageOrderValue = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-green-100 rounded-lg">
+            <TrendingUp className="h-6 w-6 text-green-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Rekap Penjualan</h1>
+            <p className="text-gray-600">Monitor dan analisa penjualan produk</p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            console.log('🔘 [SALES] "Tambah Penjualan" button clicked');
+            console.log('📊 [SALES] Current state:', { 
+              loading, 
+              showModal, 
+              productsCount: products.length,
+              isAuthenticated: state.isAuthenticated 
+            });
+            setShowModal(true);
+            console.log('🎭 [SALES] Modal state set to true');
+          }}
+          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Tambah Penjualan
+        </button>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="p-3 bg-green-100 rounded-lg">
+              <DollarSign className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-500">Total Pendapatan</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                Rp {totalRevenue.toLocaleString('id-ID')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <Package className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-500">Total Penjualan</h3>
+              <p className="text-2xl font-bold text-gray-900">{filteredSales.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <TrendingUp className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-500">Kuantitas Terjual</h3>
+              <p className="text-2xl font-bold text-gray-900">{totalQuantity}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center">
+            <div className="p-3 bg-yellow-100 rounded-lg">
+              <DollarSign className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <h3 className="text-sm font-medium text-gray-500">Rata-rata Order</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                Rp {averageOrderValue.toLocaleString('id-ID', { maximumFractionDigits: 0 })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari customer atau produk..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">Semua Waktu</option>
+                <option value="today">Hari Ini</option>
+                <option value="week">7 Hari Terakhir</option>
+                <option value="month">30 Hari Terakhir</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <select
+                value={productFilter}
+                onChange={(e) => setProductFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">Semua Produk</option>
+                {products.map(product => (
+                  <option key={product.id} value={product.name}>{product.name}</option>
+                ))}
+              </select>
+            </div>
+            <button className="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <Download className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sales Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Daftar Penjualan</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tanggal
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Produk
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kuantitas
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Harga Satuan
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredSales.map((sale) => (
+                <tr key={sale.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(sale.date).toLocaleDateString('id-ID')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Package className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">{sale.product}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">{sale.customer}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {sale.quantity}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    Rp {sale.price.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                    Rp {sale.total.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button className="text-blue-600 hover:text-blue-900 flex items-center">
+                      <Eye className="h-4 w-4 mr-1" />
+                      Detail
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {filteredSales.length === 0 && (
+        <div className="text-center py-12">
+          <TrendingUp className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">Tidak ada data penjualan yang ditemukan</p>
+        </div>
+      )}
+
+      {/* Modal - Always render, control with display */}
+      <div 
+        className={`fixed inset-0 z-50 overflow-y-auto transition-all duration-300 ${
+          showModal ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
+        style={{ 
+          display: showModal ? 'block' : 'none',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)' 
+        }}
+      >
+        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div 
+            className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" 
+            onClick={() => {
+              console.log('🎭 [SALES] Modal backdrop clicked');
+              setShowModal(false);
+              resetForm();
+            }} 
+          />
+
+          <div 
+            className="inline-block w-full max-w-lg p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl"
+            style={{ position: 'relative', zIndex: 10 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Tambah Penjualan Baru
+              </h3>
+              <button
+                onClick={() => {
+                  console.log('🎭 [SALES] Modal X button clicked');
+                  setShowModal(false);
+                  resetForm();
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Debug info */}
+            <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
+              <strong>Debug:</strong> Products: {products.length}, Loading: {loading ? 'Yes' : 'No'}, Modal: {showModal ? 'True' : 'False'}
+            </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tanggal *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Produk *
+                  </label>
+                  <select
+                    required
+                    value={formData.product}
+                    onChange={(e) => setFormData({...formData, product: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="">Pilih Produk</option>
+                    {products.length === 0 ? (
+                      <option disabled>Loading products...</option>
+                    ) : (
+                      products.filter(p => p.status === 'Active' || !p.status).map(product => (
+                        <option key={product.id} value={product.name}>
+                          {product.name} - Rp {product.price.toLocaleString('id-ID')} (Stok: {product.stock})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kuantitas *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Customer *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    placeholder="Nama customer"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                {formData.product && formData.quantity && (
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Total Pembayaran:</p>
+                    <p className="text-lg font-bold text-green-600">
+                      Rp {((products.find(p => p.name === formData.product)?.price || 0) * parseInt(formData.quantity || '0')).toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-3 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Simpan
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

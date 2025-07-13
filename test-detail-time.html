@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Detail Button & Time Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-frame {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .instructions {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+        .test-steps {
+            background: #fff5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f56565;
+        }
+        .test-steps h3 {
+            color: #c53030;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h3>🧪 Testing Detail Button & Time Display</h3>
+        <p><strong>Tujuan:</strong> Memverifikasi bahwa button detail penjualan berfungsi dan waktu jam ditampilkan pada pembelian</p>
+        
+        <p><strong>Expected Behavior:</strong></p>
+        <ul>
+            <li>✅ Button "Detail" pada tabel penjualan dapat diklik dan berfungsi</li>
+            <li>✅ Modal detail menampilkan informasi lengkap transaksi penjualan</li>
+            <li>✅ Waktu jam ditampilkan di card pembelian</li>
+            <li>✅ Form pembelian menggunakan datetime picker</li>
+        </ul>
+    </div>
+
+    <div class="test-steps">
+        <h3>📋 Test Steps:</h3>
+        <ol>
+            <li><strong>Test Detail Button Penjualan:</strong>
+                <ul>
+                    <li>Buka halaman "Penjualan"</li>
+                    <li>Jika belum ada data, tambah penjualan dulu</li>
+                    <li>Click button "Detail" pada salah satu row penjualan</li>
+                    <li>✅ <strong>Expected:</strong> Modal detail terbuka dengan informasi lengkap</li>
+                    <li>Verify data yang ditampilkan:
+                        <ul>
+                            <li>ID Transaksi</li>
+                            <li>Tanggal & Waktu lengkap</li>
+                            <li>Info produk & customer</li>
+                            <li>Breakdown harga</li>
+                            <li>Diskon & promo (jika ada)</li>
+                        </ul>
+                    </li>
+                    <li>Click X atau click outside → Modal tertutup</li>
+                </ul>
+            </li>
+            <li><strong>Test Waktu Pembelian:</strong>
+                <ul>
+                    <li>Buka halaman "Pembelian Stok"</li>
+                    <li>Check card pembelian yang ada</li>
+                    <li>✅ <strong>Expected:</strong> Tanggal menampilkan jam (contoh: "10 Jul 2025 14:30")</li>
+                    <li>Click "Tambah Pembelian"</li>
+                    <li>Check form input tanggal</li>
+                    <li>✅ <strong>Expected:</strong> Datetime picker (dengan date + time)</li>
+                </ul>
+            </li>
+            <li><strong>Test Integration:</strong>
+                <ul>
+                    <li>Tambah pembelian dengan waktu tertentu</li>
+                    <li>Verify card pembelian menampilkan waktu yang benar</li>
+                    <li>Tambah penjualan</li>
+                    <li>Click detail penjualan</li>
+                    <li>Verify modal menampilkan waktu yang presisi</li>
+                </ul>
+            </li>
+            <li><strong>Test Modal Features:</strong>
+                <ul>
+                    <li>Test dengan penjualan yang ada diskon</li>
+                    <li>Test dengan penjualan yang ada promo code</li>
+                    <li>Test dengan different customer types</li>
+                    <li>Test responsive (resize browser window)</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <iframe 
+        src="http://localhost:5174/"
+        class="test-frame"
+        title="Stock Manager App">
+    </iframe>
+
+    <script>
+        // Monitor modal events
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('👁️') || message.includes('SALES') || message.includes('Detail')) {
+                const logDiv = document.createElement('div');
+                logDiv.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,100,200,0.9);color:white;padding:8px;font-size:12px;border-radius:4px;max-width:350px;z-index:9999;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
+                logDiv.textContent = '🔍 ' + message;
+                document.body.appendChild(logDiv);
+                setTimeout(() => {
+                    if (document.body.contains(logDiv)) {
+                        document.body.removeChild(logDiv);
+                    }
+                }, 4000);
+            }
+            originalConsoleLog.apply(console, args);
+        };
+        
+        // Add visual feedback for testing
+        setTimeout(() => {
+            const statusDiv = document.createElement('div');
+            statusDiv.style.cssText = 'position:fixed;bottom:20px;right:20px;background:rgba(0,150,0,0.9);color:white;padding:10px;border-radius:6px;font-size:14px;z-index:9999;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
+            statusDiv.innerHTML = `
+                <strong>✅ Testing Ready</strong><br>
+                • Detail buttons active<br>
+                • Time display enabled<br>
+                • Console monitoring on
+            `;
+            document.body.appendChild(statusDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(statusDiv)) {
+                    statusDiv.style.opacity = '0.7';
+                }
+            }, 5000);
+        }, 1000);
+    </script>
+</body>
+</html>

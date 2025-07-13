@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Real-time Product Dropdown</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-frame {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .instructions {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+        .test-steps {
+            background: #fff5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f56565;
+        }
+        .test-steps h3 {
+            color: #c53030;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h3>🧪 Testing Real-time Product Dropdown Update</h3>
+        <p><strong>Tujuan:</strong> Memverifikasi bahwa dropdown produk pada form penjualan langsung ter-update setelah pembelian stock</p>
+        
+        <p><strong>Expected Behavior:</strong></p>
+        <ul>
+            <li>✅ Dropdown produk menampilkan stok real-time</li>
+            <li>✅ Setelah pembelian, stok langsung ter-update tanpa refresh manual</li>
+            <li>✅ Loading indicator muncul saat data sedang di-load</li>
+            <li>✅ Auto-refresh saat modal dibuka</li>
+        </ul>
+    </div>
+
+    <div class="test-steps">
+        <h3>📋 Test Steps:</h3>
+        <ol>
+            <li><strong>Setup Initial:</strong>
+                <ul>
+                    <li>Login ke aplikasi</li>
+                    <li>Buka Console (F12) untuk monitoring log</li>
+                    <li>Catat stok awal produk</li>
+                </ul>
+            </li>
+            <li><strong>Test Case 1 - Baseline:</strong>
+                <ul>
+                    <li>Buka halaman "Penjualan"</li>
+                    <li>Klik "Tambah Penjualan"</li>
+                    <li>Check dropdown produk → Catat stok yang ditampilkan</li>
+                    <li>Cancel modal</li>
+                </ul>
+            </li>
+            <li><strong>Test Case 2 - Purchase Update:</strong>
+                <ul>
+                    <li>Buka halaman "Pembelian Stok"</li>
+                    <li>Tambah pembelian untuk produk tertentu (misal +10 stok)</li>
+                    <li>Wait loading selesai</li>
+                    <li>Langsung buka halaman "Penjualan"</li>
+                    <li>Klik "Tambah Penjualan"</li>
+                    <li>Check dropdown produk → Verify stok bertambah sesuai pembelian</li>
+                </ul>
+            </li>
+            <li><strong>Test Case 3 - Real-time Sync:</strong>
+                <ul>
+                    <li>Lakukan penjualan 1 produk</li>
+                    <li>Immediately buka form penjualan lagi</li>
+                    <li>Verify stok berkurang 1</li>
+                </ul>
+            </li>
+            <li><strong>Test Case 4 - Loading State:</strong>
+                <ul>
+                    <li>Perhatikan loading indicator saat buka modal</li>
+                    <li>Verify dropdown disabled saat loading</li>
+                    <li>Check console log untuk refresh activity</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <iframe 
+        src="http://localhost:5174/"
+        class="test-frame"
+        title="Stock Manager App">
+    </iframe>
+
+    <script>
+        // Monitor console messages
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            const message = args.join(' ');
+            if (message.includes('📦') || message.includes('🔄') || message.includes('Products')) {
+                const logDiv = document.createElement('div');
+                logDiv.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.8);color:white;padding:5px;font-size:12px;border-radius:3px;max-width:300px;z-index:9999;';
+                logDiv.textContent = message;
+                document.body.appendChild(logDiv);
+                setTimeout(() => document.body.removeChild(logDiv), 3000);
+            }
+            originalConsoleLog.apply(console, args);
+        };
+    </script>
+</body>
+</html>

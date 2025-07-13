@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perbaikan Header Sales Sheet - Stock Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            background-color: #fdf2f2;
+            color: #721c24;
+        }
+        .success {
+            border-left-color: #27ae60;
+            background-color: #f0f9f4;
+            color: #1e4d2b;
+        }
+        .info {
+            border-left-color: #3498db;
+            background-color: #ebf3fd;
+            color: #1e3a8a;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        .headers-box {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .copy-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+        .copy-btn:hover {
+            background-color: #2980b9;
+        }
+        .copy-btn.success {
+            background-color: #27ae60;
+        }
+        .step {
+            background-color: white;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .step-number {
+            font-weight: bold;
+            color: #3498db;
+            margin-right: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+        .new-column {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .highlight {
+            background-color: #e8f5e8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #2d5a2d;
+        }
+        .column-mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .column-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .column-item strong {
+            color: #2c3e50;
+        }
+        .instructions {
+            background-color: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .validation-checklist {
+            background-color: #f0f9f4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .validation-checklist ul {
+            list-style: none;
+            padding: 0;
+        }
+        .validation-checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #d4edda;
+        }
+        .validation-checklist li:before {
+            content: "✓ ";
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Perbaikan Header Sales Sheet</h1>
+        
+        <div class="alert">
+            <strong>⚠️ PENTING:</strong> Backup data Sales yang ada sebelum melakukan perubahan header. Struktur baru memiliki 15 kolom (A-O) dibanding struktur lama yang mungkin hanya 7 kolom (A-G).
+        </div>
+        
+        <div class="section">
+            <h2>📋 Header Baru untuk Sales Sheet</h2>
+            <p>Aplikasi Stock Manager sekarang menggunakan struktur yang lebih lengkap dengan 15 kolom untuk mendukung sistem pricing fleksibel:</p>
+            
+            <div class="headers-box">
+                <div>ID	Date	Product	Quantity	Price	FinalPrice	Total	Customer	CustomerType	DiscountType	DiscountValue	PromoCode	OriginalTotal	Savings	Notes</div>
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="copy-btn" onclick="copyHeaders()">📋 Copy Header (Tab-separated)</button>
+                <button class="copy-btn" onclick="copyHeadersComma()">📋 Copy Header (Comma-separated)</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🎯 Mapping Kolom</h2>
+            <div class="column-mapping">
+                <div class="column-item">
+                    <strong>A - ID</strong><br>
+                    <small>Unique identifier untuk setiap penjualan</small>
+                </div>
+                <div class="column-item">
+                    <strong>B - Date</strong><br>
+                    <small>Tanggal penjualan (WIB)</small>
+                </div>
+                <div class="column-item">
+                    <strong>C - Product</strong><br>
+                    <small>Nama produk</small>
+                </div>
+                <div class="column-item">
+                    <strong>D - Quantity</strong><br>
+                    <small>Jumlah item</small>
+                </div>
+                <div class="column-item">
+                    <strong>E - Price</strong><br>
+                    <small>Harga satuan original</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>F - FinalPrice</strong><br>
+                    <small>Harga satuan setelah diskon</small>
+                </div>
+                <div class="column-item">
+                    <strong>G - Total</strong><br>
+                    <small>Total harga final</small>
+                </div>
+                <div class="column-item">
+                    <strong>H - Customer</strong><br>
+                    <small>Nama customer</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>I - CustomerType</strong><br>
+                    <small>regular/reseller/wholesale</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>J - DiscountType</strong><br>
+                    <small>none/percentage/fixed/promo</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>K - DiscountValue</strong><br>
+                    <small>Nilai diskon (% atau jumlah)</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>L - PromoCode</strong><br>
+                    <small>Kode promo (jika ada)</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>M - OriginalTotal</strong><br>
+                    <small>Total sebelum diskon</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>N - Savings</strong><br>
+                    <small>Jumlah yang dihemat</small>
+                </div>
+                <div class="column-item new-column">
+                    <strong>O - Notes</strong><br>
+                    <small>Catatan tambahan</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 Langkah-langkah Perbaikan</h2>
+            
+            <div class="step">
+                <span class="step-number">1.</span>
+                <strong>Backup Data:</strong> Duplikat sheet "Sales" menjadi "Sales_backup" untuk jaga-jaga
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2.</span>
+                <strong>Buka Google Sheets:</strong> Akses spreadsheet Stock Manager Anda
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3.</span>
+                <strong>Pilih Sheet Sales:</strong> Klik tab "Sales" di bagian bawah
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4.</span>
+                <strong>Pilih Baris Header:</strong> Klik baris 1 (A1:O1)
+            </div>
+            
+            <div class="step">
+                <span class="step-number">5.</span>
+                <strong>Hapus Header Lama:</strong> Delete content di baris 1
+            </div>
+            
+            <div class="step">
+                <span class="step-number">6.</span>
+                <strong>Paste Header Baru:</strong> Paste header yang sudah di-copy ke A1
+            </div>
+            
+            <div class="step">
+                <span class="step-number">7.</span>
+                <strong>Format Header:</strong> Bold, background color, freeze row
+            </div>
+            
+            <div class="step">
+                <span class="step-number">8.</span>
+                <strong>Adjust Column Width:</strong> Sesuaikan lebar kolom agar readable
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>⚙️ Contoh Data Sales Baru</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>FinalPrice</th>
+                        <th>Total</th>
+                        <th>Customer</th>
+                        <th>CustomerType</th>
+                        <th>DiscountType</th>
+                        <th>DiscountValue</th>
+                        <th>PromoCode</th>
+                        <th>OriginalTotal</th>
+                        <th>Savings</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>SAL_1720435200000</td>
+                        <td>2025-07-08 10:00:00</td>
+                        <td>Produk A</td>
+                        <td>2</td>
+                        <td>10000</td>
+                        <td>9700</td>
+                        <td>19400</td>
+                        <td>Toko ABC</td>
+                        <td>reseller</td>
+                        <td>none</td>
+                        <td></td>
+                        <td></td>
+                        <td>20000</td>
+                        <td>600</td>
+                        <td>Reseller discount 3%</td>
+                    </tr>
+                    <tr>
+                        <td>SAL_1720435260000</td>
+                        <td>2025-07-08 10:01:00</td>
+                        <td>Produk B</td>
+                        <td>1</td>
+                        <td>25000</td>
+                        <td>20000</td>
+                        <td>20000</td>
+                        <td>Customer XYZ</td>
+                        <td>regular</td>
+                        <td>percentage</td>
+                        <td>20</td>
+                        <td></td>
+                        <td>25000</td>
+                        <td>5000</td>
+                        <td>Loyal customer discount</td>
+                    </tr>
+                    <tr>
+                        <td>SAL_1720435320000</td>
+                        <td>2025-07-08 10:02:00</td>
+                        <td>Produk C</td>
+                        <td>5</td>
+                        <td>15000</td>
+                        <td>11250</td>
+                        <td>56250</td>
+                        <td>Wholesale DEF</td>
+                        <td>wholesale</td>
+                        <td>promo</td>
+                        <td>25</td>
+                        <td>SPECIAL25</td>
+                        <td>75000</td>
+                        <td>18750</td>
+                        <td>Special promo code</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="instructions">
+            <h3>🔍 Penjelasan Kolom Baru</h3>
+            <ul>
+                <li><strong>FinalPrice:</strong> Harga per unit setelah semua diskon diterapkan</li>
+                <li><strong>CustomerType:</strong> Menentukan diskon otomatis (reseller 3%, wholesale 5%)</li>
+                <li><strong>DiscountType:</strong> Jenis diskon tambahan yang diterapkan</li>
+                <li><strong>DiscountValue:</strong> Nilai diskon (persentase atau nominal)</li>
+                <li><strong>PromoCode:</strong> Kode promo jika menggunakan diskon promo</li>
+                <li><strong>OriginalTotal:</strong> Total sebelum diskon untuk perhitungan hemat</li>
+                <li><strong>Savings:</strong> Total penghematan dari semua diskon</li>
+                <li><strong>Notes:</strong> Catatan tambahan tentang penjualan</li>
+            </ul>
+        </div>
+        
+        <div class="validation-checklist">
+            <h3>✅ Checklist Validasi</h3>
+            <ul>
+                <li>Header baru sudah di-paste di baris 1</li>
+                <li>Semua 15 kolom (A-O) sudah ada</li>
+                <li>Header sudah di-format (bold, background)</li>
+                <li>Lebar kolom sudah disesuaikan</li>
+                <li>Baris header sudah di-freeze</li>
+                <li>Range di config aplikasi sudah diupdate (Sales!A:O)</li>
+                <li>Data existing sudah dibackup</li>
+            </ul>
+        </div>
+        
+        <div class="success">
+            <strong>✅ Setelah Setup Selesai:</strong>
+            <ul>
+                <li>Aplikasi akan otomatis menggunakan struktur baru</li>
+                <li>Data sales baru akan tersimpan dengan lengkap</li>
+                <li>Sistem pricing fleksibel akan berfungsi optimal</li>
+                <li>Laporan akan menampilkan detail diskon dan hemat</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <strong>🔗 Link ke Spreadsheet:</strong> 
+            <a href="https://docs.google.com/spreadsheets/d/1dNSPsbJf7MUQ79F7r_DpbHLNEMo4CG7KZGYN2ubHFt0/edit" target="_blank">
+                Buka Google Sheets
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        function copyHeaders() {
+            const headers = "ID\tDate\tProduct\tQuantity\tPrice\tFinalPrice\tTotal\tCustomer\tCustomerType\tDiscountType\tDiscountValue\tPromoCode\tOriginalTotal\tSavings\tNotes";
+            navigator.clipboard.writeText(headers).then(() => {
+                showCopySuccess('Headers berhasil di-copy! Paste ke A1:O1 di Google Sheets');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                prompt('Copy header ini ke clipboard:', headers);
+            });
+        }
+        
+        function copyHeadersComma() {
+            const headers = "ID,Date,Product,Quantity,Price,FinalPrice,Total,Customer,CustomerType,DiscountType,DiscountValue,PromoCode,OriginalTotal,Savings,Notes";
+            navigator.clipboard.writeText(headers).then(() => {
+                showCopySuccess('Headers (comma-separated) berhasil di-copy!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                prompt('Copy header ini ke clipboard:', headers);
+            });
+        }
+        
+        function showCopySuccess(message) {
+            const originalButtons = document.querySelectorAll('.copy-btn');
+            originalButtons.forEach(btn => {
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.classList.add('success');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('success');
+                }, 2000);
+            });
+            
+            // Show notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #27ae60;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

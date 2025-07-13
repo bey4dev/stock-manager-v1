@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup DebtPayments Sheet Headers</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .header-preview {
+            font-family: 'Courier New', monospace;
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #dadce0;
+            overflow-x: auto;
+        }
+        .step {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🗂️ Setup DebtPayments Headers</h1>
+            <p class="subtitle">Otomatis setup header kolom untuk sheet DebtPayments</p>
+        </div>
+
+        <div class="section">
+            <h3>📋 Header yang akan dibuat:</h3>
+            <div class="header-preview">
+ID | DebtID | Type | Amount | Quantity | ProductName | PaymentDate | Notes | CreatedAt
+            </div>
+            <p><strong>Total:</strong> 9 kolom (A-I)</p>
+        </div>
+
+        <div class="grid">
+            <div class="step">
+                <h4><span class="step-number">1</span>Persiapan</h4>
+                <p>Pastikan Anda sudah login ke Google dan memiliki akses ke spreadsheet Stock Manager.</p>
+                <button class="btn btn-primary" onclick="checkAuth()">🔐 Check Authentication</button>
+                <div id="auth-status"></div>
+            </div>
+
+            <div class="step">
+                <h4><span class="step-number">2</span>Setup Headers</h4>
+                <p>Klik tombol di bawah untuk otomatis membuat header di sheet DebtPayments.</p>
+                <button class="btn btn-success" onclick="setupDebtPaymentsHeaders()">⚡ Setup Headers Otomatis</button>
+                <div id="setup-status"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📝 Detail Kolom DebtPayments:</h3>
+            <div class="code-block">
+A. ID           - Unique identifier untuk payment
+B. DebtID       - ID hutang yang dibayar
+C. Type         - Tipe pembayaran (money/product)
+D. Amount       - Jumlah uang (untuk tipe money)
+E. Quantity     - Jumlah barang (untuk tipe product)
+F. ProductName  - Nama produk (untuk tipe product)
+G. PaymentDate  - Tanggal pembayaran
+H. Notes        - Catatan tambahan
+I. CreatedAt    - Timestamp pembuatan record
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🔧 Manual Setup (Alternatif):</h3>
+            <div class="step">
+                <h4><span class="step-number">A</span>Buka Google Sheets</h4>
+                <p>Buka spreadsheet Stock Manager Anda di Google Sheets.</p>
+                <a href="https://docs.google.com/spreadsheets/d/1dNSPsbJf7MUQ79F7r_DpbHLNEMo4CG7KZGYN2ubHFt0/edit" 
+                   target="_blank" class="btn btn-primary">📊 Buka Spreadsheet</a>
+            </div>
+
+            <div class="step">
+                <h4><span class="step-number">B</span>Pilih Sheet DebtPayments</h4>
+                <p>Klik tab "DebtPayments" di bagian bawah spreadsheet.</p>
+            </div>
+
+            <div class="step">
+                <h4><span class="step-number">C</span>Input Headers</h4>
+                <p>Copy dan paste header berikut ke baris pertama (A1:I1):</p>
+                <div class="code-block">
+ID	DebtID	Type	Amount	Quantity	ProductName	PaymentDate	Notes	CreatedAt
+                </div>
+                <button class="btn btn-warning" onclick="copyHeaders()">📋 Copy Headers</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>✅ Verifikasi Setup</h3>
+            <p>Setelah setup, pastikan:</p>
+            <ul>
+                <li>✓ Header sudah terisi di baris pertama</li>
+                <li>✓ Ada 9 kolom dari A sampai I</li>
+                <li>✓ Format cell sudah benar</li>
+                <li>✓ Sheet siap menerima data pembayaran hutang</li>
+            </ul>
+            <button class="btn btn-primary" onclick="verifySetup()">🔍 Verify Setup</button>
+            <div id="verify-status"></div>
+        </div>
+
+        <div id="error-log" style="display: none;">
+            <div class="section">
+                <h3>🐛 Error Log</h3>
+                <div id="error-details" class="code-block"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Sheets API configuration
+        const GOOGLE_CONFIG = {
+            CLIENT_ID: '752419828170-o835j9j32gmcmc9sdhcajnqoaikoh8j8.apps.googleusercontent.com',
+            API_KEY: 'AIzaSyBcYircHFrqPXVkwHfo9DX4v91fVz2MvBw',
+            DISCOVERY_DOC: 'https://sheets.googleapis.com/$discovery/rest?version=v4',
+            SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
+            SPREADSHEET_ID: '1dNSPsbJf7MUQ79F7r_DpbHLNEMo4CG7KZGYN2ubHFt0'
+        };
+
+        let gapi, gisInited = false, gapiInited = false;
+
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showError(error) {
+            console.error('Error:', error);
+            document.getElementById('error-log').style.display = 'block';
+            document.getElementById('error-details').textContent = JSON.stringify(error, null, 2);
+        }
+
+        // Initialize Google APIs
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: GOOGLE_CONFIG.API_KEY,
+                discoveryDocs: [GOOGLE_CONFIG.DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        function gisLoaded() {
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                console.log('Google APIs loaded successfully');
+            }
+        }
+
+        async function checkAuth() {
+            try {
+                showStatus('auth-status', '🔍 Checking authentication...', 'info');
+                
+                // Get auth token
+                const token = gapi.client.getToken();
+                if (token) {
+                    showStatus('auth-status', '✅ Authenticated successfully!', 'success');
+                } else {
+                    showStatus('auth-status', '❌ Not authenticated. Please login first.', 'error');
+                }
+            } catch (error) {
+                showError(error);
+                showStatus('auth-status', '❌ Authentication check failed', 'error');
+            }
+        }
+
+        async function setupDebtPaymentsHeaders() {
+            try {
+                showStatus('setup-status', '⚡ Setting up DebtPayments headers...', 'info');
+
+                // Headers untuk DebtPayments sheet
+                const headers = [
+                    ['ID', 'DebtID', 'Type', 'Amount', 'Quantity', 'ProductName', 'PaymentDate', 'Notes', 'CreatedAt']
+                ];
+
+                const response = await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+                    range: 'DebtPayments!A1:I1',
+                    valueInputOption: 'RAW',
+                    resource: {
+                        values: headers
+                    }
+                });
+
+                if (response.status === 200) {
+                    showStatus('setup-status', '✅ DebtPayments headers berhasil dibuat!', 'success');
+                    
+                    // Format headers
+                    await formatHeaders();
+                } else {
+                    throw new Error('Failed to create headers');
+                }
+            } catch (error) {
+                showError(error);
+                showStatus('setup-status', '❌ Setup headers gagal. Coba manual setup.', 'error');
+            }
+        }
+
+        async function formatHeaders() {
+            try {
+                // Format header row (bold, background color)
+                const formatRequest = {
+                    spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+                    resource: {
+                        requests: [
+                            {
+                                repeatCell: {
+                                    range: {
+                                        sheetId: await getSheetId('DebtPayments'),
+                                        startRowIndex: 0,
+                                        endRowIndex: 1,
+                                        startColumnIndex: 0,
+                                        endColumnIndex: 9
+                                    },
+                                    cell: {
+                                        userEnteredFormat: {
+                                            backgroundColor: {
+                                                red: 0.9,
+                                                green: 0.9,
+                                                blue: 0.9
+                                            },
+                                            textFormat: {
+                                                bold: true
+                                            }
+                                        }
+                                    },
+                                    fields: 'userEnteredFormat(backgroundColor,textFormat)'
+                                }
+                            }
+                        ]
+                    }
+                };
+
+                await gapi.client.sheets.spreadsheets.batchUpdate(formatRequest);
+                console.log('Headers formatted successfully');
+            } catch (error) {
+                console.log('Header formatting failed, but headers are created:', error);
+            }
+        }
+
+        async function getSheetId(sheetName) {
+            try {
+                const response = await gapi.client.sheets.spreadsheets.get({
+                    spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID
+                });
+                
+                const sheet = response.result.sheets.find(s => s.properties.title === sheetName);
+                return sheet ? sheet.properties.sheetId : 0;
+            } catch (error) {
+                console.error('Error getting sheet ID:', error);
+                return 0;
+            }
+        }
+
+        async function verifySetup() {
+            try {
+                showStatus('verify-status', '🔍 Verifying setup...', 'info');
+
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+                    range: 'DebtPayments!A1:I1'
+                });
+
+                if (response.result.values && response.result.values.length > 0) {
+                    const headers = response.result.values[0];
+                    const expectedHeaders = ['ID', 'DebtID', 'Type', 'Amount', 'Quantity', 'ProductName', 'PaymentDate', 'Notes', 'CreatedAt'];
+                    
+                    if (headers.length === expectedHeaders.length) {
+                        const isValid = headers.every((header, index) => header === expectedHeaders[index]);
+                        if (isValid) {
+                            showStatus('verify-status', '✅ Setup verified! DebtPayments sheet siap digunakan.', 'success');
+                        } else {
+                            showStatus('verify-status', '⚠️ Headers tidak sesuai. Silakan setup ulang.', 'warning');
+                        }
+                    } else {
+                        showStatus('verify-status', `⚠️ Jumlah kolom tidak sesuai. Ditemukan ${headers.length}, dibutuhkan ${expectedHeaders.length}.`, 'warning');
+                    }
+                } else {
+                    showStatus('verify-status', '❌ Headers tidak ditemukan. Silakan setup terlebih dahulu.', 'error');
+                }
+            } catch (error) {
+                showError(error);
+                showStatus('verify-status', '❌ Verification failed', 'error');
+            }
+        }
+
+        function copyHeaders() {
+            const headers = 'ID\tDebtID\tType\tAmount\tQuantity\tProductName\tPaymentDate\tNotes\tCreatedAt';
+            navigator.clipboard.writeText(headers).then(() => {
+                alert('✅ Headers copied to clipboard! Paste ke A1:I1 di sheet DebtPayments.');
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                alert('❌ Copy failed. Please copy manually:\n\n' + headers);
+            });
+        }
+
+        // Load Google APIs
+        const script1 = document.createElement('script');
+        script1.src = 'https://apis.google.com/js/api.js';
+        script1.onload = gapiLoaded;
+        document.head.appendChild(script1);
+
+        const script2 = document.createElement('script');
+        script2.src = 'https://accounts.google.com/gsi/client';
+        script2.onload = gisLoaded;
+        document.head.appendChild(script2);
+    </script>
+</body>
+</html>

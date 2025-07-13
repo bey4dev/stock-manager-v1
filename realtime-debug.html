@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Auth Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; font-family: monospace; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; background: #007bff; color: white; }
+        button:hover { background: #0056b3; }
+        .danger { background: #dc3545; }
+        .danger:hover { background: #c82333; }
+        .secondary { background: #6c757d; }
+        .secondary:hover { background: #5a6268; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔍 Real-time Authentication Debug</h2>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="checkAuthStatus()">🔍 Check Auth Status</button>
+            <button onclick="simulateAuth()">🎭 Simulate Auth</button>
+            <button onclick="clearAuth()" class="danger">🗑️ Clear Auth</button>
+            <button onclick="testGoogleAPI()" class="secondary">🧪 Test Google API</button>
+            <button onclick="startMonitoring()">📊 Start Monitoring</button>
+            <button onclick="stopMonitoring()">⏹️ Stop Monitoring</button>
+        </div>
+        
+        <div id="status"></div>
+        
+        <details style="margin-top: 20px;">
+            <summary>Current State (Click to expand)</summary>
+            <pre id="fullState"></pre>
+        </details>
+    </div>
+    
+    <script>
+        let monitoringInterval = null;
+        
+        function addStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+            statusDiv.innerHTML += `<div class="status ${statusClass}">[${timestamp}] ${message}</div>`;
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+        
+        function clearStatus() {
+            document.getElementById('status').innerHTML = '';
+        }
+        
+        function checkAuthStatus() {
+            clearStatus();
+            addStatus('=== CHECKING AUTHENTICATION STATUS ===');
+            
+            // Check localStorage
+            const authData = localStorage.getItem('stockmanager_auth');
+            const tokenData = localStorage.getItem('google_oauth_token');
+            
+            addStatus(`LocalStorage - Auth: ${authData ? '✅ Present' : '❌ Missing'}`, authData ? 'success' : 'error');
+            addStatus(`LocalStorage - Token: ${tokenData ? '✅ Present' : '❌ Missing'}`, tokenData ? 'success' : 'error');
+            
+            // Parse and analyze auth data
+            if (authData) {
+                try {
+                    const auth = JSON.parse(authData);
+                    addStatus(`Auth Data - isAuthenticated: ${auth.isAuthenticated}`, auth.isAuthenticated ? 'success' : 'error');
+                    addStatus(`Auth Data - User: ${auth.user ? auth.user.name || 'No name' : 'No user'}`, auth.user ? 'success' : 'error');
+                    addStatus(`Auth Data - Email: ${auth.user ? auth.user.email || 'No email' : 'No user'}`, auth.user ? 'success' : 'error');
+                } catch (e) {
+                    addStatus(`Auth Data - Parse Error: ${e.message}`, 'error');
+                }
+            }
+            
+            // Parse and analyze token data
+            if (tokenData) {
+                try {
+                    const token = JSON.parse(tokenData);
+                    addStatus(`Token - Access Token: ${token.access_token ? '✅ Present' : '❌ Missing'}`, token.access_token ? 'success' : 'error');
+                    
+                    if (token.timestamp) {
+                        const age = Date.now() - token.timestamp;
+                        const ageMinutes = Math.round(age / 1000 / 60);
+                        addStatus(`Token - Age: ${ageMinutes} minutes`);
+                        
+                        const maxAge = 60 * 60 * 1000; // 1 hour
+                        const isExpired = age > maxAge;
+                        addStatus(`Token - Expired: ${isExpired}`, isExpired ? 'error' : 'success');
+                    }
+                } catch (e) {
+                    addStatus(`Token Data - Parse Error: ${e.message}`, 'error');
+                }
+            }
+            
+            // Check Google APIs
+            addStatus(`Google APIs - window.gapi: ${window.gapi ? '✅ Loaded' : '❌ Not loaded'}`, window.gapi ? 'success' : 'error');
+            addStatus(`Google APIs - window.google: ${window.google ? '✅ Loaded' : '❌ Not loaded'}`, window.google ? 'success' : 'error');
+            
+            if (window.gapi && window.gapi.client) {
+                try {
+                    const gapiToken = window.gapi.client.getToken();
+                    addStatus(`GAPI Token: ${gapiToken ? '✅ Present' : '❌ Missing'}`, gapiToken ? 'success' : 'error');
+                } catch (e) {
+                    addStatus(`GAPI Token Error: ${e.message}`, 'error');
+                }
+            }
+            
+            updateFullState();
+        }
+        
+        function updateFullState() {
+            const fullState = {
+                timestamp: new Date().toISOString(),
+                localStorage: {
+                    stockmanager_auth: localStorage.getItem('stockmanager_auth'),
+                    google_oauth_token: localStorage.getItem('google_oauth_token'),
+                    allKeys: Object.keys(localStorage)
+                },
+                googleAPIs: {
+                    gapi: !!window.gapi,
+                    google: !!window.google,
+                    gapiClient: !!window.gapi?.client
+                },
+                url: window.location.href
+            };
+            
+            document.getElementById('fullState').textContent = JSON.stringify(fullState, null, 2);
+        }
+        
+        function simulateAuth() {
+            addStatus('=== SIMULATING AUTHENTICATION ===', 'warning');
+            
+            const fakeUser = {
+                name: 'Debug User',
+                email: 'debug@test.com'
+            };
+            
+            const authData = {
+                isAuthenticated: true,
+                user: fakeUser
+            };
+            
+            const tokenData = {
+                access_token: 'fake_debug_token_' + Date.now(),
+                timestamp: Date.now(),
+                expires_in: 3600
+            };
+            
+            localStorage.setItem('stockmanager_auth', JSON.stringify(authData));
+            localStorage.setItem('google_oauth_token', JSON.stringify(tokenData));
+            
+            addStatus('✅ Fake authentication data saved', 'success');
+            addStatus('⚠️ Go to main app and reload to test persistence', 'warning');
+            
+            checkAuthStatus();
+        }
+        
+        function clearAuth() {
+            addStatus('=== CLEARING AUTHENTICATION ===', 'warning');
+            
+            localStorage.removeItem('stockmanager_auth');
+            localStorage.removeItem('google_oauth_token');
+            sessionStorage.clear();
+            
+            addStatus('✅ All authentication data cleared', 'success');
+            
+            checkAuthStatus();
+        }
+        
+        function testGoogleAPI() {
+            addStatus('=== TESTING GOOGLE API ===', 'warning');
+            
+            if (!window.gapi) {
+                addStatus('❌ Google API not loaded', 'error');
+                return;
+            }
+            
+            if (!window.gapi.client) {
+                addStatus('❌ GAPI client not loaded', 'error');
+                return;
+            }
+            
+            try {
+                const token = window.gapi.client.getToken();
+                if (token) {
+                    addStatus('✅ GAPI token available', 'success');
+                    
+                    // Try to make a test API call
+                    window.gapi.client.request({
+                        'path': 'https://www.googleapis.com/oauth2/v2/userinfo'
+                    }).then(
+                        response => {
+                            addStatus('✅ Google API test call successful', 'success');
+                            addStatus(`User info: ${JSON.stringify(response.result)}`, 'info');
+                        },
+                        error => {
+                            addStatus(`❌ Google API test call failed: ${JSON.stringify(error)}`, 'error');
+                        }
+                    );
+                } else {
+                    addStatus('❌ No GAPI token available', 'error');
+                }
+            } catch (e) {
+                addStatus(`❌ Error testing Google API: ${e.message}`, 'error');
+            }
+        }
+        
+        function startMonitoring() {
+            if (monitoringInterval) {
+                addStatus('⚠️ Monitoring already running', 'warning');
+                return;
+            }
+            
+            addStatus('📊 Starting real-time monitoring...', 'info');
+            
+            monitoringInterval = setInterval(() => {
+                const authData = localStorage.getItem('stockmanager_auth');
+                const tokenData = localStorage.getItem('google_oauth_token');
+                
+                const status = `[Monitor] Auth: ${authData ? '✅' : '❌'} | Token: ${tokenData ? '✅' : '❌'} | GAPI: ${window.gapi ? '✅' : '❌'}`;
+                console.log(status);
+                
+                // Only show significant changes
+                if (!window.lastMonitorStatus || window.lastMonitorStatus !== status) {
+                    addStatus(status, 'info');
+                    window.lastMonitorStatus = status;
+                }
+            }, 2000); // Check every 2 seconds
+        }
+        
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                addStatus('⏹️ Monitoring stopped', 'info');
+            } else {
+                addStatus('⚠️ No monitoring running', 'warning');
+            }
+        }
+        
+        // Auto-check on load
+        window.onload = function() {
+            addStatus('🚀 Debug page loaded', 'info');
+            checkAuthStatus();
+        };
+        
+        // Listen for storage changes
+        window.addEventListener('storage', function(e) {
+            addStatus(`🔄 Storage changed - Key: ${e.key}`, 'info');
+            checkAuthStatus();
+        });
+        
+        // Listen for focus changes
+        window.addEventListener('focus', function() {
+            addStatus('👁️ Window focused - rechecking status', 'info');
+            checkAuthStatus();
+        });
+    </script>
+</body>
+</html>

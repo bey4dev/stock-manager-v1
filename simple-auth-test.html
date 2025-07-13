@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .warning { background: #fff3cd; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        button { margin: 5px; padding: 8px 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Simple Authentication Test</h2>
+    
+    <div class="test">
+        <h3>1. Set Test Auth Data</h3>
+        <button onclick="setTestAuth()">Set Test Auth</button>
+        <pre id="set-result"></pre>
+    </div>
+    
+    <div class="test">
+        <h3>2. Check Auth Data</h3>
+        <button onclick="checkAuth()">Check Auth</button>
+        <pre id="check-result"></pre>
+    </div>
+    
+    <div class="test">
+        <h3>3. Simulate App Logic</h3>
+        <button onclick="simulateApp()">Simulate App Logic</button>
+        <pre id="app-result"></pre>
+    </div>
+    
+    <div class="test">
+        <h3>4. Test Reload</h3>
+        <p>After setting test auth data, click reload to see if it persists:</p>
+        <button onclick="window.location.reload()">Reload Page</button>
+    </div>
+    
+    <script>
+        function setTestAuth() {
+            const authData = {
+                isAuthenticated: true,
+                user: {
+                    name: "Test User",
+                    email: "test@example.com"
+                }
+            };
+            
+            const tokenData = {
+                access_token: "test_token_" + Date.now(),
+                timestamp: Date.now(),
+                expires_in: 3600
+            };
+            
+            localStorage.setItem('stockmanager_auth', JSON.stringify(authData));
+            localStorage.setItem('google_oauth_token', JSON.stringify(tokenData));
+            
+            document.getElementById('set-result').textContent = 
+                'Test auth data set:\n' + 
+                'Auth: ' + JSON.stringify(authData, null, 2) + '\n' +
+                'Token: ' + JSON.stringify(tokenData, null, 2);
+        }
+        
+        function checkAuth() {
+            const authRaw = localStorage.getItem('stockmanager_auth');
+            const tokenRaw = localStorage.getItem('google_oauth_token');
+            
+            let result = 'Raw data:\n';
+            result += 'Auth: ' + (authRaw || 'null') + '\n';
+            result += 'Token: ' + (tokenRaw || 'null') + '\n\n';
+            
+            if (authRaw) {
+                try {
+                    const auth = JSON.parse(authRaw);
+                    result += 'Parsed auth:\n' + JSON.stringify(auth, null, 2) + '\n\n';
+                } catch (e) {
+                    result += 'Auth parse error: ' + e.message + '\n\n';
+                }
+            }
+            
+            if (tokenRaw) {
+                try {
+                    const token = JSON.parse(tokenRaw);
+                    result += 'Parsed token:\n' + JSON.stringify(token, null, 2) + '\n\n';
+                    
+                    if (token.timestamp) {
+                        const age = Date.now() - token.timestamp;
+                        const ageMinutes = Math.round(age / 1000 / 60);
+                        result += 'Token age: ' + ageMinutes + ' minutes\n';
+                        result += 'Token expired: ' + (ageMinutes > 60) + '\n';
+                    }
+                } catch (e) {
+                    result += 'Token parse error: ' + e.message + '\n\n';
+                }
+            }
+            
+            document.getElementById('check-result').textContent = result;
+        }
+        
+        function simulateApp() {
+            // Simulate getInitialAuthState
+            let initialState = { isAuthenticated: false, user: null };
+            
+            try {
+                const savedAuth = localStorage.getItem('stockmanager_auth');
+                if (savedAuth) {
+                    const authData = JSON.parse(savedAuth);
+                    initialState = {
+                        isAuthenticated: authData.isAuthenticated || false,
+                        user: authData.user || null
+                    };
+                }
+            } catch (error) {
+                console.error('Error parsing auth:', error);
+            }
+            
+            // Simulate App.tsx render condition
+            const shouldShowAuth = !initialState.isAuthenticated || !initialState.user;
+            
+            let result = 'Initial state from localStorage:\n';
+            result += JSON.stringify(initialState, null, 2) + '\n\n';
+            result += 'App.tsx logic:\n';
+            result += '!isAuthenticated: ' + !initialState.isAuthenticated + '\n';
+            result += '!user: ' + !initialState.user + '\n';
+            result += '(!isAuthenticated || !user): ' + shouldShowAuth + '\n\n';
+            result += 'Result: ' + (shouldShowAuth ? 'SHOW LOGIN PAGE' : 'SHOW DASHBOARD') + '\n';
+            
+            const resultDiv = document.getElementById('app-result');
+            resultDiv.textContent = result;
+            resultDiv.className = shouldShowAuth ? 'error' : 'success';
+        }
+        
+        // Auto-run on page load
+        window.onload = function() {
+            checkAuth();
+            simulateApp();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Debug</title>
+</head>
+<body>
+    <h1>Google OAuth Configuration Debug</h1>
+    <div id="debug-info"></div>
+    <button onclick="debugOAuth()">Test OAuth Config</button>
+    
+    <script>
+        function debugOAuth() {
+            const clientId = '752419828170-o835j9j32gmcmc9sdhcajnqoaikoh8j8.apps.googleusercontent.com';
+            const currentOrigin = window.location.origin;
+            
+            console.log('Current Origin:', currentOrigin);
+            console.log('Client ID:', clientId);
+            
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.innerHTML = `
+                <h3>Debug Information:</h3>
+                <p><strong>Current Origin:</strong> ${currentOrigin}</p>
+                <p><strong>Client ID:</strong> ${clientId}</p>
+                <p><strong>Expected Origins for localhost:</strong></p>
+                <ul>
+                    <li>http://localhost:5173</li>
+                    <li>http://127.0.0.1:5173</li>
+                </ul>
+                <p><strong>Note:</strong> Make sure these origins are added to your Google OAuth configuration</p>
+            `;
+        }
+        
+        // Auto-run debug on load
+        window.onload = debugOAuth;
+    </script>
+</body>
+</html>

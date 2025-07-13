@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockManager - Setup Google Spreadsheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .step {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .step:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+        }
+        
+        .step-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .step-number {
+            background: #4f46e5;
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .step-content {
+            padding: 1.5rem;
+        }
+        
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 8px 8px 8px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        
+        .button.secondary {
+            background: linear-gradient(135deg, #059669, #10b981);
+        }
+        
+        .code-block {
+            background: #1f2937;
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #374151;
+        }
+        
+        .table-container {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+        
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        
+        th {
+            background: #4f46e5;
+            color: white;
+            font-weight: 600;
+        }
+        
+        td {
+            background: white;
+        }
+        
+        .warning {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .checklist {
+            list-style: none;
+            margin: 1rem 0;
+        }
+        
+        .checklist li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .checklist li:before {
+            content: "☐";
+            font-size: 1.2rem;
+            color: #6b7280;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .action-card {
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .action-card:hover {
+            border-color: #4f46e5;
+            background: #f1f5f9;
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .step-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>📊 Setup Google Spreadsheet</h1>
+                <p>Panduan lengkap untuk mengatur Google Sheets sebagai database StockManager</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="content">
+                <div class="quick-actions">
+                    <div class="action-card">
+                        <div class="action-icon">🚀</div>
+                        <h3>Quick Start</h3>
+                        <p>Buat spreadsheet baru dengan template</p>
+                        <a href="https://docs.google.com/spreadsheets/create" target="_blank" class="button">Buat Spreadsheet</a>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon">📋</div>
+                        <h3>Cek Existing</h3>
+                        <p>Buka spreadsheet yang sudah ada</p>
+                        <a href="https://docs.google.com/spreadsheets/d/1dNSPsbJf7MUQ79F7r_DpbHLNEMo4CG7KZGYN2ubHFt0/edit" target="_blank" class="button secondary">Buka Spreadsheet</a>
+                    </div>
+                    <div class="action-card">
+                        <div class="action-icon">🔧</div>
+                        <h3>Test Aplikasi</h3>
+                        <p>Cek koneksi di halaman Debug</p>
+                        <a href="http://localhost:5174" target="_blank" class="button">Buka Aplikasi</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">Verifikasi Sheet yang Diperlukan</div>
+            </div>
+            <div class="step-content">
+                <p>Spreadsheet harus memiliki 4 sheet dengan nama persis seperti ini:</p>
+                <ul class="checklist">
+                    <li><strong>Products</strong> - Data produk digital</li>
+                    <li><strong>Sales</strong> - Data penjualan</li>
+                    <li><strong>Purchases</strong> - Data pembelian/stok</li>
+                    <li><strong>Dashboard</strong> - Metrics dashboard</li>
+                </ul>
+                <div class="warning">
+                    <strong>⚠️ Penting:</strong> Nama sheet harus persis seperti di atas (huruf besar/kecil sama). Jika ada yang kurang, klik tombol "+" di bawah spreadsheet untuk menambah sheet baru.
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">Setup Sheet "Products"</div>
+            </div>
+            <div class="step-content">
+                <p>Sheet ini menyimpan data produk digital yang dijual. Struktur kolom:</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>A - ID</th>
+                                <th>B - Name</th>
+                                <th>C - Category</th>
+                                <th>D - Price</th>
+                                <th>E - Stock</th>
+                                <th>F - Cost</th>
+                                <th>G - Description</th>
+                                <th>H - Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PRD_001</td>
+                                <td>E-Book Premium</td>
+                                <td>Digital Books</td>
+                                <td>150000</td>
+                                <td>50</td>
+                                <td>75000</td>
+                                <td>Buku digital premium</td>
+                                <td>Active</td>
+                            </tr>
+                            <tr>
+                                <td>PRD_002</td>
+                                <td>Online Course</td>
+                                <td>Education</td>
+                                <td>500000</td>
+                                <td>30</td>
+                                <td>200000</td>
+                                <td>Kursus online programming</td>
+                                <td>Active</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><strong>Copy paste data template ini ke sheet Products:</strong></p>
+                <div class="code-block">ID	Name	Category	Price	Stock	Cost	Description	Status
+PRD_001	E-Book Premium	Digital Books	150000	50	75000	Buku digital premium	Active
+PRD_002	Online Course	Education	500000	30	200000	Kursus online programming	Active
+PRD_003	Software License	Software	1000000	10	400000	Lisensi software development	Active
+PRD_004	Digital Template	Design	75000	100	25000	Template desain website	Active
+PRD_005	Mobile App	Software	200000	25	80000	Aplikasi mobile premium	Active</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">Setup Sheet "Sales"</div>
+            </div>
+            <div class="step-content">
+                <p>Sheet ini menyimpan data penjualan produk. Struktur kolom:</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>A - ID</th>
+                                <th>B - Date</th>
+                                <th>C - Product</th>
+                                <th>D - Quantity</th>
+                                <th>E - Price</th>
+                                <th>F - Total</th>
+                                <th>G - Customer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SAL_001</td>
+                                <td>2025-07-01</td>
+                                <td>E-Book Premium</td>
+                                <td>5</td>
+                                <td>150000</td>
+                                <td>750000</td>
+                                <td>John Doe</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><strong>Copy paste data template ini ke sheet Sales:</strong></p>
+                <div class="code-block">ID	Date	Product	Quantity	Price	Total	Customer
+SAL_001	2025-07-01	E-Book Premium	5	150000	750000	John Doe
+SAL_002	2025-07-02	Online Course	2	500000	1000000	Jane Smith
+SAL_003	2025-07-03	Digital Template	10	75000	750000	Bob Wilson
+SAL_004	2025-07-04	Software License	1	1000000	1000000	Alice Brown</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-title">Setup Sheet "Purchases"</div>
+            </div>
+            <div class="step-content">
+                <p>Sheet ini menyimpan data pembelian/restok. Struktur kolom:</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>A - ID</th>
+                                <th>B - Date</th>
+                                <th>C - Product</th>
+                                <th>D - Quantity</th>
+                                <th>E - Cost</th>
+                                <th>F - Total</th>
+                                <th>G - Supplier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PUR_001</td>
+                                <td>2025-07-01</td>
+                                <td>E-Book Premium</td>
+                                <td>20</td>
+                                <td>75000</td>
+                                <td>1500000</td>
+                                <td>Content Creator A</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><strong>Copy paste data template ini ke sheet Purchases:</strong></p>
+                <div class="code-block">ID	Date	Product	Quantity	Cost	Total	Supplier
+PUR_001	2025-07-01	E-Book Premium	20	75000	1500000	Content Creator A
+PUR_002	2025-07-02	Online Course	10	200000	2000000	Education Provider B
+PUR_003	2025-07-03	Digital Template	50	25000	1250000	Design Studio C</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div class="step-title">Setup Sheet "Dashboard"</div>
+            </div>
+            <div class="step-content">
+                <p>Sheet ini menyimpan metrics untuk dashboard. Struktur kolom:</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>A - Key</th>
+                                <th>B - Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>totalProducts</td>
+                                <td>5</td>
+                            </tr>
+                            <tr>
+                                <td>totalSales</td>
+                                <td>4</td>
+                            </tr>
+                            <tr>
+                                <td>totalRevenue</td>
+                                <td>3500000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p><strong>Copy paste data template ini ke sheet Dashboard:</strong></p>
+                <div class="code-block">Key	Value
+totalProducts	5
+totalSales	4
+totalRevenue	3500000
+totalPurchases	3
+totalCost	4750000
+profit	-1250000</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <div class="step-title">Share & Permission</div>
+            </div>
+            <div class="step-content">
+                <p>Pastikan spreadsheet bisa diakses oleh aplikasi:</p>
+                <ol style="margin-left: 1rem;">
+                    <li>Klik tombol <strong>"Share"</strong> di pojok kanan atas spreadsheet</li>
+                    <li>Masukkan email Google yang akan digunakan untuk login ke aplikasi</li>
+                    <li>Set permission ke <strong>"Editor"</strong></li>
+                    <li>Klik <strong>"Send"</strong></li>
+                </ol>
+                <div class="warning">
+                    <strong>⚠️ Penting:</strong> Email yang diberi akses harus sama dengan email yang digunakan untuk login ke aplikasi StockManager.
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                <div class="step-number">7</div>
+                <div class="step-title">Update Konfigurasi</div>
+            </div>
+            <div class="step-content">
+                <p>Copy Spreadsheet ID dan update konfigurasi aplikasi:</p>
+                <ol style="margin-left: 1rem;">
+                    <li>Copy ID dari URL spreadsheet: <br>
+                        <div class="code-block">https://docs.google.com/spreadsheets/d/[COPY_THIS_ID]/edit</div>
+                    </li>
+                    <li>Buka file <code>src/config/google-sheets.ts</code></li>
+                    <li>Update <code>SPREADSHEET_ID</code> dengan ID yang di-copy</li>
+                    <li>Pastikan <code>DEMO_MODE = false</code></li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="content">
+                <div class="success">
+                    <h3>🎉 Setup Selesai!</h3>
+                    <p>Setelah semua langkah di atas, test aplikasi:</p>
+                    <ol style="margin-left: 1rem; margin-top: 1rem;">
+                        <li>Buka aplikasi di <strong>http://localhost:5174</strong></li>
+                        <li>Login dengan Google account yang sudah diberi akses</li>
+                        <li>Buka halaman <strong>"🔍 Debug"</strong> untuk cek status</li>
+                        <li>Klik tombol <strong>"Check Spreadsheet"</strong> untuk verifikasi</li>
+                        <li>Pastikan semua indikator hijau ✅</li>
+                    </ol>
+                </div>
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="http://localhost:5174" target="_blank" class="button" style="font-size: 1.1rem; padding: 16px 32px;">
+                        🚀 Test Aplikasi Sekarang
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

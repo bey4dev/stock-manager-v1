@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Template Creator - StockManager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .step h3 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        .template-data {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Google Sheets Template Creator</h1>
+        <p style="text-align: center; color: #666;">Setup template untuk aplikasi StockManager</p>
+
+        <div class="warning">
+            <strong>⚠️ Penting:</strong> Pastikan Anda sudah setup Google Cloud Console dan mendapatkan CLIENT_ID & API_KEY sebelum melanjutkan.
+        </div>
+
+        <div class="step">
+            <h3>🔧 Langkah 1: Buat Google Spreadsheet Baru</h3>
+            <p>Klik tombol di bawah untuk membuat copy template Google Spreadsheet:</p>
+            <a href="https://docs.google.com/spreadsheets/create" target="_blank" class="button">
+                📝 Buat Spreadsheet Baru
+            </a>
+        </div>
+
+        <div class="step">
+            <h3>📋 Langkah 2: Setup Sheet "Products"</h3>
+            <p>Buat sheet dengan nama <strong>"Products"</strong> dan isi header di baris pertama:</p>
+            <div class="template-data">
+A1: ID          B1: Name              C1: Category        D1: Price
+E1: Stock       F1: Cost              G1: Description     H1: Status
+
+Contoh data:
+A2: PRD_001     B2: E-Book Premium    C2: Digital Books   D2: 150000
+E2: 50          F2: 75000             G2: Buku digital    H2: Active
+
+A3: PRD_002     B3: Online Course     C3: Education       D3: 500000
+E3: 30          F3: 200000            G3: Kursus online   H3: Active
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>📈 Langkah 3: Setup Sheet "Sales"</h3>
+            <p>Buat sheet dengan nama <strong>"Sales"</strong> dan isi header di baris pertama:</p>
+            <div class="template-data">
+A1: ID          B1: Date        C1: Product         D1: Quantity
+E1: Price       F1: Total       G1: Customer
+
+Contoh data:
+A2: SAL_001     B2: 2025-01-01  C2: E-Book Premium  D2: 5
+E2: 150000      F2: 750000      G2: John Doe
+
+A3: SAL_002     B3: 2025-01-02  C3: Online Course   D3: 2
+E3: 500000      F3: 1000000     G3: Jane Smith
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🛒 Langkah 4: Setup Sheet "Purchases"</h3>
+            <p>Buat sheet dengan nama <strong>"Purchases"</strong> dan isi header di baris pertama:</p>
+            <div class="template-data">
+A1: ID          B1: Date        C1: Product         D1: Quantity
+E1: Cost        F1: Total       G1: Supplier
+
+Contoh data:
+A2: PUR_001     B2: 2025-01-01  C2: E-Book Premium  D2: 20
+E2: 75000       F2: 1500000     G2: Content Creator A
+
+A3: PUR_002     B3: 2025-01-02  C3: Online Course   D3: 10
+E3: 200000      F3: 2000000     G3: Education Provider B
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>📊 Langkah 5: Setup Sheet "Dashboard"</h3>
+            <p>Buat sheet dengan nama <strong>"Dashboard"</strong> dan isi header di baris pertama:</p>
+            <div class="template-data">
+A1: Key             B1: Value
+
+A2: totalProducts   B2: 5
+A3: totalSales      B3: 10
+A4: totalRevenue    B4: 5000000
+A5: totalPurchases  B5: 8
+A6: totalCost       B6: 3500000
+A7: profit          B7: 1500000
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🔑 Langkah 6: Copy Spreadsheet ID</h3>
+            <p>Setelah membuat spreadsheet, copy ID dari URL:</p>
+            <div class="template-data">
+URL: https://docs.google.com/spreadsheets/d/[COPY_THIS_ID]/edit
+Contoh: 1dNSPsbJf7MUQ79F7r_DpbHLNEMo4CG7KZGYN2ubHFt0
+            </div>
+            <p>Paste ID tersebut ke file <code>src/config/google-sheets.ts</code> pada bagian <code>SPREADSHEET_ID</code></p>
+        </div>
+
+        <div class="step">
+            <h3>🔐 Langkah 7: Share Spreadsheet</h3>
+            <p>Pastikan spreadsheet dapat diakses oleh email Google yang akan digunakan untuk login ke aplikasi:</p>
+            <ol>
+                <li>Klik tombol "Share" di pojok kanan atas</li>
+                <li>Masukkan email Google yang akan digunakan</li>
+                <li>Set permission ke "Editor"</li>
+                <li>Klik "Send"</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <h3>✅ Langkah 8: Test Koneksi</h3>
+            <p>Setelah semua setup selesai:</p>
+            <ol>
+                <li>Pastikan <code>DEMO_MODE = false</code> di <code>google-sheets.ts</code></li>
+                <li>Jalankan aplikasi: <code>npm run dev</code></li>
+                <li>Login dengan Google account yang sudah diberi akses</li>
+                <li>Cek console browser untuk melihat log koneksi</li>
+                <li>Verifikasi data dari Google Sheets muncul di aplikasi</li>
+            </ol>
+        </div>
+
+        <div class="warning">
+            <strong>🔍 Troubleshooting:</strong><br>
+            - Jika masih muncul "Demo User", coba clear localStorage dan login ulang<br>
+            - Jika error "API not initialized", cek CLIENT_ID dan API_KEY<br>
+            - Jika error "Access denied", pastikan spreadsheet sudah di-share<br>
+            - Buka Developer Tools (F12) untuk melihat log detail di Console tab
+        </div>
+    </div>
+</body>
+</html>

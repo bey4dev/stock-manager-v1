@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Step-by-Step Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .warning { background: #fff3cd; }
+        button { margin: 5px; padding: 8px 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Step-by-Step Authentication Test</h2>
+    
+    <div class="step">
+        <h3>Step 1: Set Auth Data</h3>
+        <button onclick="setAuthData()">Set Test Auth Data</button>
+        <div id="step1"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 2: Check Initial State</h3>
+        <button onclick="checkInitialState()">Check Initial State</button>
+        <div id="step2"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 3: Test App Logic</h3>
+        <button onclick="testAppLogic()">Test App Logic</button>
+        <div id="step3"></div>
+    </div>
+    
+    <div class="step">
+        <h3>Step 4: Test Reload</h3>
+        <button onclick="window.location.reload()">Reload Page</button>
+        <p>After setting auth data, reload to see if it persists</p>
+    </div>
+    
+    <div class="step">
+        <h3>Step 5: Go to Main App</h3>
+        <a href="/" target="_blank">Open Main App</a>
+        <p>Check if main app shows dashboard or login</p>
+    </div>
+    
+    <script>
+        function setAuthData() {
+            const authData = {
+                isAuthenticated: true,
+                user: {
+                    name: "Test User",
+                    email: "test@example.com"
+                }
+            };
+            
+            localStorage.setItem('stockmanager_auth', JSON.stringify(authData));
+            
+            document.getElementById('step1').innerHTML = 
+                '<div class="success">✅ Auth data set successfully!</div>' +
+                '<pre>' + JSON.stringify(authData, null, 2) + '</pre>';
+        }
+        
+        function checkInitialState() {
+            // This simulates getInitialAuthState function
+            let initialState = { isAuthenticated: false, user: null };
+            
+            try {
+                const savedAuth = localStorage.getItem('stockmanager_auth');
+                if (savedAuth) {
+                    const authData = JSON.parse(savedAuth);
+                    initialState = {
+                        isAuthenticated: authData.isAuthenticated || false,
+                        user: authData.user || null
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading auth state:', error);
+            }
+            
+            const hasAuth = initialState.isAuthenticated;
+            const hasUser = !!initialState.user;
+            
+            document.getElementById('step2').innerHTML = 
+                '<div class="' + (hasAuth && hasUser ? 'success' : 'error') + '">' +
+                'Initial State: ' + (hasAuth && hasUser ? '✅ Valid' : '❌ Invalid') + '</div>' +
+                '<pre>' + JSON.stringify(initialState, null, 2) + '</pre>' +
+                '<p>isAuthenticated: ' + hasAuth + '</p>' +
+                '<p>user exists: ' + hasUser + '</p>';
+        }
+        
+        function testAppLogic() {
+            // Simulate App.tsx logic
+            let initialState = { isAuthenticated: false, user: null };
+            
+            try {
+                const savedAuth = localStorage.getItem('stockmanager_auth');
+                if (savedAuth) {
+                    const authData = JSON.parse(savedAuth);
+                    initialState = {
+                        isAuthenticated: authData.isAuthenticated || false,
+                        user: authData.user || null
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading auth state:', error);
+            }
+            
+            // App.tsx condition: if (!isAuthenticated || !user)
+            const showLogin = !initialState.isAuthenticated || !initialState.user;
+            
+            document.getElementById('step3').innerHTML = 
+                '<div class="' + (showLogin ? 'error' : 'success') + '">' +
+                'App Decision: ' + (showLogin ? '❌ Show Login' : '✅ Show Dashboard') + '</div>' +
+                '<p>Condition: (!isAuthenticated || !user)</p>' +
+                '<p>!isAuthenticated: ' + !initialState.isAuthenticated + '</p>' +
+                '<p>!user: ' + !initialState.user + '</p>' +
+                '<p>Result: ' + showLogin + '</p>';
+        }
+        
+        // Auto-run checks on page load
+        window.onload = function() {
+            checkInitialState();
+            testAppLogic();
+        };
+    </script>
+</body>
+</html>

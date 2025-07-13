@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Google Sheets Headers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .headers {
+            background-color: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4299e1;
+            margin: 15px 0;
+        }
+        .headers code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #2d3748;
+        }
+        .copy-btn {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #3182ce;
+        }
+        .step {
+            background-color: #edf2f7;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #38a169;
+        }
+        .step-number {
+            font-weight: bold;
+            color: #38a169;
+        }
+        .warning {
+            background-color: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #e53e3e;
+            margin: 15px 0;
+        }
+        .success {
+            background-color: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #38a169;
+            margin: 15px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f7fafc;
+            font-weight: bold;
+        }
+        .highlight {
+            background-color: #fef5e7;
+            color: #c05621;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Setup Google Sheets Headers</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Penting:</strong> Pastikan Anda sudah membuat spreadsheet dan sheet yang diperlukan sebelum melanjutkan setup ini.
+        </div>
+        
+        <div class="section">
+            <h2>1. Sales Sheet Headers (TERBARU)</h2>
+            <p>Sheet <strong>Sales</strong> sekarang memiliki kolom tambahan untuk sistem diskon dan pricing fleksibel.</p>
+            
+            <div class="headers">
+                <code>ID | Date | Product | Quantity | Price | FinalPrice | Total | Customer | CustomerType | DiscountType | DiscountValue | PromoCode | OriginalTotal | Savings | Notes</code>
+                <button class="copy-btn" onclick="copyToClipboard('salesHeaders')">Copy Headers</button>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">Langkah 1:</span> Buka Google Spreadsheet Anda
+            </div>
+            <div class="step">
+                <span class="step-number">Langkah 2:</span> Pilih sheet "Sales"
+            </div>
+            <div class="step">
+                <span class="step-number">Langkah 3:</span> Paste headers di baris pertama (A1:O1)
+            </div>
+            <div class="step">
+                <span class="step-number">Langkah 4:</span> Format baris header (bold, background color)
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kolom</th>
+                        <th>Nama</th>
+                        <th>Deskripsi</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>A</td>
+                        <td>ID</td>
+                        <td>Unique identifier untuk setiap penjualan</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr>
+                        <td>B</td>
+                        <td>Date</td>
+                        <td>Tanggal penjualan</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr>
+                        <td>C</td>
+                        <td>Product</td>
+                        <td>Nama produk</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr>
+                        <td>D</td>
+                        <td>Quantity</td>
+                        <td>Jumlah item</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr>
+                        <td>E</td>
+                        <td>Price</td>
+                        <td>Harga satuan original</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>F</td>
+                        <td>FinalPrice</td>
+                        <td>Harga satuan setelah diskon</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr>
+                        <td>G</td>
+                        <td>Total</td>
+                        <td>Total harga final</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr>
+                        <td>H</td>
+                        <td>Customer</td>
+                        <td>Nama customer</td>
+                        <td>Existing</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>I</td>
+                        <td>CustomerType</td>
+                        <td>Tipe customer (regular/reseller/wholesale)</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>J</td>
+                        <td>DiscountType</td>
+                        <td>Tipe diskon (none/percentage/fixed/promo)</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>K</td>
+                        <td>DiscountValue</td>
+                        <td>Nilai diskon (persentase atau jumlah)</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>L</td>
+                        <td>PromoCode</td>
+                        <td>Kode promo (jika ada)</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>M</td>
+                        <td>OriginalTotal</td>
+                        <td>Total sebelum diskon</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>N</td>
+                        <td>Savings</td>
+                        <td>Jumlah yang dihemat</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>O</td>
+                        <td>Notes</td>
+                        <td>Catatan tambahan</td>
+                        <td><span class="highlight">NEW</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>2. Sheets Lainnya (Tidak Berubah)</h2>
+            
+            <h3>Products Sheet</h3>
+            <div class="headers">
+                <code>ID | Name | Category | Price | Stock | Cost | Description | Status</code>
+                <button class="copy-btn" onclick="copyToClipboard('productsHeaders')">Copy Headers</button>
+            </div>
+            
+            <h3>Purchases Sheet</h3>
+            <div class="headers">
+                <code>ID | Date | Product | Quantity | Cost | Total | Supplier</code>
+                <button class="copy-btn" onclick="copyToClipboard('purchasesHeaders')">Copy Headers</button>
+            </div>
+            
+            <h3>Contacts Sheet</h3>
+            <div class="headers">
+                <code>ID | Name | Type | Email | Phone | Address | Company | Notes | CreatedAt | UpdatedAt</code>
+                <button class="copy-btn" onclick="copyToClipboard('contactsHeaders')">Copy Headers</button>
+            </div>
+            
+            <h3>Debts Sheet</h3>
+            <div class="headers">
+                <code>ID | ContactID | ContactName | ContactType | Type | Description | Amount | ProductID | ProductName | Quantity | Status | TotalAmount | PaidAmount | RemainingAmount | DueDate | CreatedAt | UpdatedAt | Notes</code>
+                <button class="copy-btn" onclick="copyToClipboard('debtsHeaders')">Copy Headers</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>3. Validasi Setup</h2>
+            <div class="step">
+                <span class="step-number">✓</span> Semua sheet sudah dibuat
+            </div>
+            <div class="step">
+                <span class="step-number">✓</span> Headers sudah dipaste di baris pertama
+            </div>
+            <div class="step">
+                <span class="step-number">✓</span> Format headers sudah diatur (bold, background)
+            </div>
+            <div class="step">
+                <span class="step-number">✓</span> Spreadsheet ID sudah diupdate di config
+            </div>
+        </div>
+        
+        <div class="success">
+            <strong>✅ Selesai!</strong> Google Sheets sudah siap digunakan dengan fitur pricing fleksibel yang baru.
+        </div>
+    </div>
+    
+    <script>
+        // Headers data
+        const headers = {
+            salesHeaders: "ID\tDate\tProduct\tQuantity\tPrice\tFinalPrice\tTotal\tCustomer\tCustomerType\tDiscountType\tDiscountValue\tPromoCode\tOriginalTotal\tSavings\tNotes",
+            productsHeaders: "ID\tName\tCategory\tPrice\tStock\tCost\tDescription\tStatus",
+            purchasesHeaders: "ID\tDate\tProduct\tQuantity\tCost\tTotal\tSupplier",
+            contactsHeaders: "ID\tName\tType\tEmail\tPhone\tAddress\tCompany\tNotes\tCreatedAt\tUpdatedAt",
+            debtsHeaders: "ID\tContactID\tContactName\tContactType\tType\tDescription\tAmount\tProductID\tProductName\tQuantity\tStatus\tTotalAmount\tPaidAmount\tRemainingAmount\tDueDate\tCreatedAt\tUpdatedAt\tNotes"
+        };
+        
+        function copyToClipboard(headerType) {
+            const text = headers[headerType];
+            navigator.clipboard.writeText(text).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = "Copied!";
+                button.style.backgroundColor = "#38a169";
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = "#4299e1";
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy headers. Please copy manually.');
+            });
+        }
+    </script>
+</body>
+</html>

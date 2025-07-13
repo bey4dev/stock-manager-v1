@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup New Sheets - Stock Manager</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        
+        .section h2 {
+            color: #495057;
+            margin-top: 0;
+        }
+        
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert h3 {
+            margin-top: 0;
+        }
+        
+        .alert ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .info-box {
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .info-box h3 {
+            color: #004085;
+            margin-top: 0;
+        }
+        
+        .feature-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .feature-list li:before {
+            content: "✅ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        code {
+            background-color: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Setup New Features - Stock Manager</h1>
+        
+        <div class="info-box">
+            <h3>📋 New Features Being Added</h3>
+            <ul class="feature-list">
+                <li><strong>Contact Management</strong> - Manage customer and supplier information</li>
+                <li><strong>Debt Management</strong> - Track money and product debts/credits</li>
+                <li><strong>Payment Tracking</strong> - Record payments and product receipts</li>
+                <li><strong>Enhanced Data Structure</strong> - Better organization in Google Sheets</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Sheets to be Created</h2>
+            <p>This setup will create the following new sheets in your Google Spreadsheet:</p>
+            
+            <h3>1. Contacts Sheet</h3>
+            <p>For storing customer and supplier information:</p>
+            <ul>
+                <li>Name, Email, Phone, Address</li>
+                <li>Company information</li>
+                <li>Customer/Supplier classification</li>
+                <li>Notes and timestamps</li>
+            </ul>
+            
+            <h3>2. Debts Sheet</h3>
+            <p>For tracking debt and credit records:</p>
+            <ul>
+                <li>Money debts (cash amounts)</li>
+                <li>Product debts (goods to be delivered/received)</li>
+                <li>Payment status tracking</li>
+                <li>Due dates and notes</li>
+            </ul>
+            
+            <h3>3. DebtPayments Sheet</h3>
+            <p>For recording payment and receipt transactions:</p>
+            <ul>
+                <li>Payment records (money received/paid)</li>
+                <li>Product delivery records (goods received/delivered)</li>
+                <li>Payment history and notes</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>🔐 Authentication Required</h2>
+            <p>Click the button below to authenticate with Google and set up the new sheets:</p>
+            <button id="authenticateBtn" class="btn">🔑 Authenticate & Setup Sheets</button>
+        </div>
+        
+        <div id="result"></div>
+        
+        <div class="info-box">
+            <h3>📝 What happens after setup?</h3>
+            <p>Once setup is complete, you'll have access to:</p>
+            <ul>
+                <li><strong>Contact Management</strong> - Add, edit, and organize customer/supplier data</li>
+                <li><strong>Debt Tracking</strong> - Record what customers owe you or what you owe suppliers</li>
+                <li><strong>Payment Processing</strong> - Track payments received and made</li>
+                <li><strong>Product Deliveries</strong> - Record when products are delivered or received</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>🔄 After Setup</h2>
+            <p>After completing this setup:</p>
+            <ol>
+                <li>Go back to your main Stock Manager application</li>
+                <li>You'll see new menu items: <code>Kontak</code> and <code>Hutang Piutang</code></li>
+                <li>Start adding your customers and suppliers</li>
+                <li>Begin tracking debts and payments</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="setup-new-sheets.js"></script>
+</body>
+</html>

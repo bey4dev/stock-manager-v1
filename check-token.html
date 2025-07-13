@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Debug</title>
+</head>
+<body>
+    <h2>Google OAuth Token Debug</h2>
+    
+    <button onclick="checkToken()">Check Token Status</button>
+    <button onclick="clearTokens()">Clear All Tokens</button>
+    
+    <pre id="output"></pre>
+    
+    <script>
+        function checkToken() {
+            const output = document.getElementById('output');
+            const authToken = localStorage.getItem('stockmanager_auth');
+            const googleToken = localStorage.getItem('google_oauth_token');
+            
+            const result = {
+                timestamp: new Date().toISOString(),
+                stockmanager_auth: authToken ? JSON.parse(authToken) : null,
+                google_oauth_token: googleToken ? JSON.parse(googleToken) : null,
+                localStorage_keys: Object.keys(localStorage),
+                url: window.location.href
+            };
+            
+            output.textContent = JSON.stringify(result, null, 2);
+            
+            if (googleToken) {
+                try {
+                    const token = JSON.parse(googleToken);
+                    const now = Date.now();
+                    const timestamp = token.timestamp || 0;
+                    const age = now - timestamp;
+                    const ageMinutes = Math.round(age / 1000 / 60);
+                    
+                    console.log('Token age:', ageMinutes, 'minutes');
+                    console.log('Token data:', token);
+                } catch (e) {
+                    console.error('Error parsing token:', e);
+                }
+            }
+        }
+        
+        function clearTokens() {
+            localStorage.removeItem('stockmanager_auth');
+            localStorage.removeItem('google_oauth_token');
+            alert('Tokens cleared');
+            checkToken();
+        }
+        
+        // Auto check on load
+        checkToken();
+    </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        button { margin: 5px; padding: 8px 12px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h2>Stock Manager - Reload Test</h2>
+    
+    <div>
+        <button onclick="checkCurrentState()">Check Current State</button>
+        <button onclick="simulateLogin()">Simulate Login</button>
+        <button onclick="clearAuth()">Clear Auth</button>
+        <button onclick="window.location.reload()">Reload Page</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function checkCurrentState() {
+            log('=== CHECKING CURRENT STATE ===');
+            
+            const authData = localStorage.getItem('stockmanager_auth');
+            const tokenData = localStorage.getItem('google_oauth_token');
+            
+            log(`Auth data: ${authData ? 'Present' : 'Missing'}`, authData ? 'success' : 'error');
+            log(`Token data: ${tokenData ? 'Present' : 'Missing'}`, tokenData ? 'success' : 'error');
+            
+            if (authData) {
+                try {
+                    const auth = JSON.parse(authData);
+                    log(`User authenticated: ${auth.isAuthenticated}`, auth.isAuthenticated ? 'success' : 'error');
+                    log(`User name: ${auth.user?.name || 'N/A'}`);
+                    log(`User email: ${auth.user?.email || 'N/A'}`);
+                } catch (e) {
+                    log(`Error parsing auth data: ${e.message}`, 'error');
+                }
+            }
+            
+            if (tokenData) {
+                try {
+                    const token = JSON.parse(tokenData);
+                    log(`Token present: ${!!token.access_token}`, token.access_token ? 'success' : 'error');
+                    
+                    if (token.timestamp) {
+                        const age = Date.now() - token.timestamp;
+                        const ageMinutes = Math.round(age / 1000 / 60);
+                        log(`Token age: ${ageMinutes} minutes`);
+                        
+                        const maxAge = 60 * 60 * 1000; // 1 hour
+                        const isExpired = age > maxAge;
+                        log(`Token expired: ${isExpired}`, isExpired ? 'error' : 'success');
+                    }
+                } catch (e) {
+                    log(`Error parsing token data: ${e.message}`, 'error');
+                }
+            }
+            
+            // Check for any other relevant localStorage keys
+            const allKeys = Object.keys(localStorage);
+            const relevantKeys = allKeys.filter(key => 
+                key.includes('google') || 
+                key.includes('auth') || 
+                key.includes('stock') ||
+                key.includes('gapi')
+            );
+            
+            if (relevantKeys.length > 0) {
+                log(`Other relevant localStorage keys: ${relevantKeys.join(', ')}`);
+            }
+        }
+        
+        function simulateLogin() {
+            log('=== SIMULATING LOGIN ===');
+            
+            const fakeUser = {
+                name: 'Test User',
+                email: 'test@example.com'
+            };
+            
+            const authData = {
+                isAuthenticated: true,
+                user: fakeUser
+            };
+            
+            const tokenData = {
+                access_token: 'fake_token_' + Date.now(),
+                timestamp: Date.now(),
+                expires_in: 3600
+            };
+            
+            localStorage.setItem('stockmanager_auth', JSON.stringify(authData));
+            localStorage.setItem('google_oauth_token', JSON.stringify(tokenData));
+            
+            log('Fake login data saved to localStorage', 'success');
+            log('Now try reloading the page to see if auth persists', 'warning');
+        }
+        
+        function clearAuth() {
+            log('=== CLEARING AUTH ===');
+            
+            localStorage.removeItem('stockmanager_auth');
+            localStorage.removeItem('google_oauth_token');
+            sessionStorage.clear();
+            
+            log('All auth data cleared', 'success');
+        }
+        
+        // Auto-check state on page load
+        window.onload = function() {
+            log('=== PAGE LOADED ===');
+            checkCurrentState();
+            
+            // Check URL for any parameters
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('test')) {
+                log(`Test parameter: ${params.get('test')}`, 'warning');
+            }
+        };
+        
+        // Monitor localStorage changes
+        window.addEventListener('storage', function(e) {
+            log(`localStorage changed - Key: ${e.key}, Old: ${e.oldValue ? 'present' : 'null'}, New: ${e.newValue ? 'present' : 'null'}`, 'warning');
+        });
+    </script>
+</body>
+</html>
