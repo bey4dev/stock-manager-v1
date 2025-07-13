@@ -60,7 +60,7 @@ const Debts = () => {
   const [submitting, setSubmitting] = useState(false); // Guard untuk mencegah double submit
   const [showForm, setShowForm] = useState(false);
   const [showBulkPaymentForm, setShowBulkPaymentForm] = useState(false);
-  const [bulkPaymentMode, setBulkPaymentMode] = useState<'terima' | 'berikan'>('terima');
+  // Removed bulkPaymentMode - HANYA MODE TERIMA
   const [filter] = useState<'all' | 'customer' | 'supplier'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'partial' | 'completed'>('all');
   const [contactSearchQuery, setContactSearchQuery] = useState('');
@@ -603,7 +603,7 @@ const Debts = () => {
       }
     }
 
-    // Show warning about physical payment
+    // Show warning about physical payment - HANYA MODE TERIMA
     showConfirmModal(
       '💰 Konfirmasi Penerimaan Pembayaran',
       `PENTING: Pastikan Anda sudah menerima pembayaran fisik dari customer!\n\nCustomer: ${bulkPaymentData.customerName}\nJumlah: ${formatCurrency(parseFloat(bulkPaymentData.moneyAmount || '0'))}\n\n⚠️ Apakah Anda sudah benar-benar MENERIMA uang fisik dari customer?`,
@@ -611,13 +611,14 @@ const Debts = () => {
         try {
           setLoading(true);
           
-          // Get all unpaid debts for this customer
-          const customerDebts = debts.filter(debt => 
-            debt.contactName === bulkPaymentData.customerName && 
-            debt.status !== 'completed' &&
-            debt.remainingAmount > 0 &&
-            !debt.description.includes('Titip uang')
-          );
+          // TERIMA: Customer bayar hutang ke toko
+          if (bulkPaymentData.paymentType === 'money') {
+            const customerDebts = debts.filter(debt => 
+              debt.contactName === bulkPaymentData.customerName && 
+              debt.status !== 'completed' &&
+              debt.remainingAmount > 0 &&
+              !debt.description.includes('Titip uang')
+            );
 
           if (customerDebts.length === 0) {
             showAlertModal('Info', 'Customer tidak memiliki hutang yang perlu dibayar', 'alert');
@@ -776,6 +777,7 @@ const Debts = () => {
             notes: ''
           });
           setShowBulkPaymentForm(false);
+          }
         } catch (error) {
           console.error('Error processing bulk payment:', error);
           showAlertModal('Error', 'Gagal memproses pembayaran!', 'error');
@@ -2060,7 +2062,7 @@ const Debts = () => {
                         {summary.contactType === 'customer' && (
                           <button
                             onClick={() => {
-                              setBulkPaymentMode('terima');
+                              // setBulkPaymentMode('terima'); // Removed - always terima mode
                               setBulkPaymentData({
                                 customerName: summary.contactName,
                                 paymentType: 'money',
@@ -2820,7 +2822,7 @@ const Debts = () => {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {bulkPaymentMode === 'terima' ? 'Terima Pembayaran dari Customer' : 'Berikan Pembayaran ke Customer'}
+                  Terima Pembayaran dari Customer
                 </h3>
                 <button
                   type="button"
@@ -2864,7 +2866,7 @@ const Debts = () => {
               try {
                 const now = getWIBTimestamp();
                 
-                if (bulkPaymentMode === 'terima') {
+                if (true) { // ALWAYS TERIMA MODE ONLY
                   // TERIMA: Customer membayar hutang atau memberikan uang/barang ke toko
                   if (bulkPaymentData.paymentType === 'money') {
                     // Terima uang dari customer - gunakan logika pembayaran hutang yang sudah ada
@@ -3095,82 +3097,6 @@ const Debts = () => {
                       showAlertModal('Success', 'Pembayaran hutang barang berhasil diterima!', 'success');
                     }
                   }
-                } else if (bulkPaymentMode === 'berikan') {
-                  // BERIKAN: Toko memberikan uang/barang ke customer (refund, cash out titip uang, dll)
-                  if (bulkPaymentData.paymentType === 'money') {
-                    // Berikan uang ke customer (misalnya: cash out dari titip uang customer)
-                    const selectedContact = contacts.find(c => c.name === bulkPaymentData.customerName);
-                    const amount = parseFloat(bulkPaymentData.moneyAmount);
-                    
-                    // Buat record TITIP UANG (positive amount) untuk customer
-                    const cashOutRow = [
-                      `DEBT_${Date.now()}_GIVE_MONEY`,
-                      selectedContact?.id || '',
-                      bulkPaymentData.customerName,
-                      'customer',
-                      'money',
-                      `💰 Titip uang dari toko - ${bulkPaymentData.notes}`,
-                      amount, // Positive karena customer mendapat uang (jadi saldo bertambah)
-                      '',
-                      '',
-                      0,
-                      'completed',
-                      0, // paidAmount = 0 karena ini bukan pembayaran hutang
-                      amount, // remainingAmount = full amount sebagai saldo customer
-                      amount, // totalAmount = amount yang diberikan
-                      '',
-                      now,
-                      now,
-                      `Berikan uang ke customer: ${bulkPaymentData.notes}`
-                    ];
-                    
-                    await GoogleSheetsService.appendToSheet('Debts', [cashOutRow]);
-                    
-                    const paymentRecord = [
-                      `payment_${Date.now()}_GIVE_MONEY`,
-                      `DEBT_${Date.now()}_GIVE_MONEY`,
-                      'money',
-                      amount, // Positive amount untuk record pemberian
-                      '',
-                      '',
-                      formatWIBDate(new Date()),
-                      `Berikan uang ke customer - ${bulkPaymentData.notes}`,
-                      now
-                    ];
-                    
-                    await GoogleSheetsService.appendToSheet('DebtPayments', [paymentRecord]);
-                    showAlertModal('Success', `Berhasil memberikan uang ke customer!\n\nJumlah: ${formatCurrency(amount)}\nCustomer: ${bulkPaymentData.customerName}\n\n💰 Saldo customer bertambah ${formatCurrency(amount)}`, 'success');
-                  } else if (bulkPaymentData.paymentType === 'product') {
-                    // Berikan barang ke customer (misalnya: refund barang, atau berikan barang dari stok)
-                    const selectedProduct = products.find(p => p.id === bulkPaymentData.productId);
-                    const qty = parseInt(bulkPaymentData.productQuantity);
-                    const totalValue = selectedProduct ? selectedProduct.price * qty : 0; // Gunakan price untuk berikan barang
-                    const selectedContact = contacts.find(c => c.name === bulkPaymentData.customerName);
-                    
-                    const giveProductRow = [
-                      `DEBT_${Date.now()}_GIVE_PRODUCT`,
-                      selectedContact?.id || '',
-                      bulkPaymentData.customerName,
-                      'customer',
-                      'product',
-                      `Berikan barang ke customer: ${selectedProduct?.name} ${qty} pcs`,
-                      -totalValue, // Negative karena ini pengeluaran
-                      bulkPaymentData.productId,
-                      selectedProduct?.name || '',
-                      -qty, // Negative karena keluar dari stok
-                      'completed',
-                      -totalValue,
-                      -totalValue,
-                      0,
-                      '',
-                      now,
-                      now,
-                      `Berikan barang ke customer: ${bulkPaymentData.notes}`
-                    ];
-                    
-                    await GoogleSheetsService.appendToSheet('Debts', [giveProductRow]);
-                    showAlertModal('Success', `Berhasil memberikan barang ke customer!\n\nBarang: ${selectedProduct?.name}\nJumlah: ${qty} pcs\nNilai: ${formatCurrency(totalValue)}`, 'success');
-                  }
                 }
                 
                 await loadData();
@@ -3191,56 +3117,6 @@ const Debts = () => {
                 setLoading(false);
               }
             }} className="px-6 py-4 space-y-6">
-              {/* Mode Selection - Terima atau Berikan */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mode Transaksi <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBulkPaymentMode('terima');
-                      // Auto-update deskripsi ketika mode berubah
-                      setBulkPaymentData(prev => ({
-                        ...prev,
-                        notes: prev.customerName ? `Terima pembayaran dari ${prev.customerName}` : ''
-                      }));
-                    }}
-                    className={`px-4 py-3 rounded-lg border transition-all ${
-                      bulkPaymentMode === 'terima' 
-                        ? 'bg-green-50 border-green-300 text-green-700 ring-1 ring-green-300' 
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-center">
-                      <div className="text-lg mb-1">📥</div>
-                      <div className="font-medium">Terima</div>
-                      <div className="text-xs opacity-75">Customer bayar ke toko</div>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBulkPaymentMode('berikan');
-                      // Auto-update deskripsi ketika mode berubah
-                      setBulkPaymentData(prev => ({
-                        ...prev,
-                        notes: prev.customerName ? `Berikan pembayaran ke ${prev.customerName}` : ''
-                      }));
-                    }}
-                    className={`px-4 py-3 rounded-lg border transition-all ${
-                      bulkPaymentMode === 'berikan' 
-                        ? 'bg-blue-50 border-blue-300 text-blue-700 ring-1 ring-blue-300' 
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="text-center">
-                      <div className="text-lg mb-1">📤</div>
-                      <div className="font-medium">Berikan</div>
-                      <div className="text-xs opacity-75">Toko bayar ke customer</div>
-                    </div>
-                  </button>
-                </div>
-              </div>
               
               {/* Penting: Pilih tipe pembayaran */}
               <div>
@@ -3264,9 +3140,7 @@ const Debts = () => {
                     const customerName = e.target.value;
                     // Auto-update deskripsi ketika customer dipilih
                     const autoNotes = customerName 
-                      ? (bulkPaymentMode === 'terima' 
-                          ? `Terima pembayaran dari ${customerName}` 
-                          : `Berikan pembayaran ke ${customerName}`)
+                      ? `Terima pembayaran dari ${customerName}` // Always terima mode
                       : '';
                     
                     setBulkPaymentData({ 
@@ -3286,7 +3160,7 @@ const Debts = () => {
               {/* Field dinamis sesuai tipe pembayaran */}
               {bulkPaymentData.paymentType === 'money' ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah {bulkPaymentMode === 'terima' ? 'Diterima' : 'Diberikan'} <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah Diterima <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <span className="absolute left-3 top-2 text-gray-500">Rp</span>
                     <input
@@ -3298,12 +3172,12 @@ const Debts = () => {
                       placeholder="0"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Masukkan jumlah uang yang {bulkPaymentMode === 'terima' ? 'diterima dari' : 'diberikan ke'} customer</p>
+                  <p className="text-xs text-gray-500 mt-1">Masukkan jumlah uang yang diterima dari customer</p>
                   {/* Rincian pembayaran uang */}
                   {bulkPaymentData.moneyAmount && parseFloat(bulkPaymentData.moneyAmount) > 0 && (
                     <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex justify-between text-sm">
-                        <span>Total {bulkPaymentMode === 'terima' ? 'diterima' : 'diberikan'}:</span>
+                        <span>Total diterima:</span>
                         <span className="font-bold">{formatCurrency(parseFloat(bulkPaymentData.moneyAmount))}</span>
                       </div>
                     </div>
@@ -3321,8 +3195,7 @@ const Debts = () => {
                       <option value="">Pilih Produk</option>
                       {products.map(product => (
                         <option key={product.id} value={product.id}>
-                          {product.name} - {formatCurrency(bulkPaymentMode === 'terima' ? product.cost : product.price)}
-                          {bulkPaymentMode === 'terima' && ' (harga beli)'}
+                          {product.name} - {formatCurrency(product.cost)} (harga beli)
                         </option>
                       ))}
                     </select>
@@ -3342,7 +3215,7 @@ const Debts = () => {
                     const selectedProduct = products.find(p => p.id === bulkPaymentData.productId);
                     const qty = parseInt(bulkPaymentData.productQuantity);
                     // Gunakan cost untuk terima, price untuk berikan
-                    const priceToUse = bulkPaymentMode === 'terima' ? (selectedProduct?.cost || 0) : (selectedProduct?.price || 0);
+                    const priceToUse = selectedProduct?.cost || 0;
                     const total = selectedProduct ? priceToUse * qty : 0;
                     return (
                       <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -3351,7 +3224,7 @@ const Debts = () => {
                           <span className="font-bold">{selectedProduct?.name}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span>{bulkPaymentMode === 'terima' ? 'Harga beli per unit:' : 'Harga jual per unit:'}</span>
+                          <span>Harga beli per unit:</span>
                           <span>{formatCurrency(priceToUse)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
@@ -3359,7 +3232,7 @@ const Debts = () => {
                           <span>{qty} pcs</span>
                         </div>
                         <div className="flex justify-between text-sm font-bold border-t border-blue-200 pt-2 mt-2">
-                          <span>Total {bulkPaymentMode === 'terima' ? 'diterima' : 'diberikan'}:</span>
+                          <span>Total diterima:</span>
                           <span>{formatCurrency(total)}</span>
                         </div>
                       </div>
@@ -3374,7 +3247,7 @@ const Debts = () => {
                   onChange={e => setBulkPaymentData({ ...bulkPaymentData, notes: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={bulkPaymentMode === 'terima' ? 'Catatan penerimaan pembayaran...' : 'Catatan pemberian pembayaran...'}
+                  placeholder="Catatan penerimaan pembayaran..."
                 />
               </div>
               <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
@@ -3399,7 +3272,7 @@ const Debts = () => {
                   type="submit"
                   className="px-6 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"
                 >
-                  {bulkPaymentMode === 'terima' ? 'Konfirmasi Penerimaan' : 'Konfirmasi Pemberian'}
+                  Konfirmasi Penerimaan
                 </button>
               </div>
             </form>
