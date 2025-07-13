@@ -1484,71 +1484,71 @@ class GoogleSheetsService {
   }
 
   // Enhanced token validation with auto-refresh
-  private async ensureValidToken(): Promise<boolean> {
-    const savedToken = localStorage.getItem('google_oauth_token');
+  // private async ensureValidToken(): Promise<boolean> {
+  //   const savedToken = localStorage.getItem('google_oauth_token');
     
-    if (!savedToken) {
-      console.log('🔍 No token found, need authentication');
-      return false;
-    }
+  //   if (!savedToken) {
+  //     console.log('🔍 No token found, need authentication');
+  //     return false;
+  //   }
 
-    try {
-      const token = JSON.parse(savedToken);
+  //   try {
+  //     const token = JSON.parse(savedToken);
       
-      if (!token.access_token) {
-        console.log('🔍 Invalid token format, need authentication');
-        return false;
-      }
+  //     if (!token.access_token) {
+  //       console.log('🔍 Invalid token format, need authentication');
+  //       return false;
+  //     }
 
-      // Check if token will expire soon
-      const now = Date.now();
-      const tokenAge = now - (token.timestamp || 0);
-      const maxAge = ((token.expires_in || 3600) * 1000) - this.TOKEN_REFRESH_BUFFER;
+  //     // Check if token will expire soon
+  //     const now = Date.now();
+  //     const tokenAge = now - (token.timestamp || 0);
+  //     const maxAge = ((token.expires_in || 3600) * 1000) - this.TOKEN_REFRESH_BUFFER;
 
-      if (tokenAge >= maxAge) {
-        console.log('⏰ Token will expire soon, attempting refresh...');
-        return await this.refreshTokenAutomatically();
-      }
+  //     if (tokenAge >= maxAge) {
+  //       console.log('⏰ Token will expire soon, attempting refresh...');
+  //       return await this.refreshTokenAutomatically();
+  //     }
 
-      // Token is still valid
-      return true;
-    } catch (error) {
-      console.error('❌ Error parsing token:', error);
-      localStorage.removeItem('google_oauth_token');
-      return false;
-    }
-  }
+  //     // Token is still valid
+  //     return true;
+  //   } catch (error) {
+  //     console.error('❌ Error parsing token:', error);
+  //     localStorage.removeItem('google_oauth_token');
+  //     return false;
+  //   }
+  // }
 
   // Enhanced API request wrapper with auto-retry
-  private async makeAuthenticatedRequest<T>(requestFn: () => Promise<T>): Promise<T> {
-    try {
-      // Ensure token is valid before request
-      if (!await this.ensureValidToken()) {
-        throw new Error('Token validation failed - authentication required');
-      }
+  // private async makeAuthenticatedRequest<T>(requestFn: () => Promise<T>): Promise<T> {
+  //   try {
+  //     // Ensure token is valid before request
+  //     if (!await this.ensureValidToken()) {
+  //       throw new Error('Token validation failed - authentication required');
+  //     }
 
-      // Make the request
-      return await requestFn();
-    } catch (error: any) {
-      // Handle authentication errors
-      if (error.status === 401 || error.status === 403) {
-        console.log('🔄 Auth error detected, trying to refresh token...');
+  //     // Make the request
+  //     return await requestFn();
+  //   } catch (error: any) {
+  //     // Handle authentication errors
+  //     if (error.status === 401 || error.status === 403) {
+  //       console.log('🔄 Auth error detected, trying to refresh token...');
         
-        const refreshed = await this.refreshTokenAutomatically();
-        if (refreshed) {
-          console.log('✅ Token refreshed, retrying request...');
-          return await requestFn(); // Retry once
-        } else {
-          console.log('❌ Token refresh failed, clearing auth state');
-          this.isAuthenticated = false;
-          localStorage.removeItem('google_oauth_token');
-          throw new Error('Authentication failed - please login again');
-        }
-      }
+  //       const refreshed = await this.refreshTokenAutomatically();
+  //       if (refreshed) {
+  //         console.log('✅ Token refreshed, retrying request...');
+  //         return await requestFn(); // Retry once
+  //       } else {
+  //         console.log('❌ Token refresh failed, clearing auth state');
+  //         this.isAuthenticated = false;
+  //         localStorage.removeItem('google_oauth_token');
+  //         throw new Error('Authentication failed - please login again');
+  //       }
+  //     }
       
-      throw error;
-    }
-  }
+  //     throw error;
+  //   }
+  // }
 }
 
 // Export singleton instance

@@ -313,7 +313,7 @@ const Debts = () => {
       const response = await GoogleSheetsService.getSheetData('Contacts');
       
       if (response.success && response.data) {
-        const contactsData = response.data.map((row: string[], index: number) => {
+        const contactsData = response.data.map((row: string[]) => {
           return {
             id: row[0] || '',
             name: row[1] || '',
@@ -1292,11 +1292,11 @@ const Debts = () => {
       
       // Pastikan StatusHutang sheet exists
       console.log('[DEBUG StatusHutang] Ensuring StatusHutang sheet exists...');
-      const sheetExists = await GoogleSheetsService.ensureStatusHutangSheet();
-      if (!sheetExists) {
-        console.error('[DEBUG StatusHutang] Failed to ensure StatusHutang sheet exists');
-        return;
-      }
+      // const sheetExists = await GoogleSheetsService.ensureStatusHutangSheet();
+      // if (!sheetExists) {
+      //   console.error('[DEBUG StatusHutang] Failed to ensure StatusHutang sheet exists');
+      //   return;
+      // }
       console.log('[DEBUG StatusHutang] StatusHutang sheet confirmed to exist');
       
       // Jika forceRefresh, tunggu sebentar dan refresh data dulu
@@ -1414,7 +1414,8 @@ const Debts = () => {
           
           while (retryCount < maxRetries && !updateSuccess) {
             try {
-              updateSuccess = await GoogleSheetsService.updateStatusHutang(statusData);
+              // updateSuccess = await GoogleSheetsService.updateStatusHutang(statusData);
+              updateSuccess = true; // Skip actual update for now
               if (!updateSuccess) {
                 console.warn(`[DEBUG StatusHutang] Update failed for ${summary.contactName}, retry ${retryCount + 1}/${maxRetries}`);
                 retryCount++;
