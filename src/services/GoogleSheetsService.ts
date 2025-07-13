@@ -1574,14 +1574,27 @@ class GoogleSheetsService {
         const dataRows = rows.slice(1); // Skip header
         
         // Find existing record by contact name (more reliable than contactId)
-        const existingRowIndex = dataRows.findIndex((row: any[]) => {
-          const existingContactName = row[1]?.toString().trim().toLowerCase();
-          const searchContactName = contactData.contactName?.toString().trim().toLowerCase();
-          console.log(`[DEBUG StatusHutang] Comparing: "${existingContactName}" vs "${searchContactName}"`);
-          return existingContactName === searchContactName;
-        });
+        let existingRowIndex = -1;
+        const searchContactName = contactData.contactName?.toString().trim().toLowerCase();
         
-        console.log(`[DEBUG StatusHutang] Found existing row index: ${existingRowIndex} for contact: ${contactData.contactName}`);
+        console.log(`[DEBUG StatusHutang] Looking for contact: "${contactData.contactName}"`);
+        console.log(`[DEBUG StatusHutang] Normalized search name: "${searchContactName}"`);
+        console.log(`[DEBUG StatusHutang] Total rows to check: ${dataRows.length}`);
+        
+        for (let i = 0; i < dataRows.length; i++) {
+          const row = dataRows[i];
+          const existingContactName = row[1]?.toString().trim().toLowerCase();
+          
+          console.log(`[DEBUG StatusHutang] Row ${i}: Checking "${existingContactName}" vs "${searchContactName}"`);
+          
+          if (existingContactName === searchContactName) {
+            existingRowIndex = i;
+            console.log(`[DEBUG StatusHutang] ✅ MATCH FOUND at row index ${i}`);
+            break;
+          }
+        }
+        
+        console.log(`[DEBUG StatusHutang] Final result - existing row index: ${existingRowIndex} for contact: ${contactData.contactName}`);
         
         
         // Create timestamp in ISO format for better Google Sheets compatibility
@@ -1606,11 +1619,33 @@ class GoogleSheetsService {
         if (existingRowIndex >= 0) {
           // Update existing record
           const rowNumber = existingRowIndex + 2; // +1 for 0-based index, +1 for header row
+          console.log(`🔄 Updating existing record at row ${rowNumber} for contact: ${contactData.contactName}`);
           const updateResult = await this.updateSheetRow('StatusHutang', rowNumber, rowData);
           console.log(`✅ Updated existing StatusHutang record for ${contactData.contactName}`);
           return updateResult.success;
         } else {
-          // Append new record
+          // Before appending, do one final check to prevent race conditions
+          console.log(`⚠️ No existing record found for ${contactData.contactName}. Double-checking before creating new record...`);
+          
+          // Re-fetch fresh data to avoid race conditions
+          const freshResponse = await this.getSheetData('StatusHutang');
+          const freshRows = freshResponse.data || [];
+          const freshDataRows = freshRows.slice(1);
+          
+          const finalCheck = freshDataRows.findIndex((row: any[]) => {
+            const existingName = row[1]?.toString().trim().toLowerCase();
+            return existingName === searchContactName;
+          });
+          
+          if (finalCheck >= 0) {
+            console.log(`⚠️ Race condition detected! Record for ${contactData.contactName} was created by another process. Updating instead...`);
+            const rowNumber = finalCheck + 2;
+            const updateResult = await this.updateSheetRow('StatusHutang', rowNumber, rowData);
+            return updateResult.success;
+          }
+          
+          // Append new record only if definitely not exists
+          console.log(`✅ Creating new StatusHutang record for ${contactData.contactName}`);
           const appendResult = await this.appendToSheet('StatusHutang', [rowData]);
           console.log(`✅ Created new StatusHutang record for ${contactData.contactName}`);
           return appendResult.success;
