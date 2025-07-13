@@ -3102,35 +3102,35 @@ const Debts = () => {
                     const selectedContact = contacts.find(c => c.name === bulkPaymentData.customerName);
                     const amount = parseFloat(bulkPaymentData.moneyAmount);
                     
-                    // Buat record pengeluaran uang ke customer
+                    // Buat record TITIP UANG (positive amount) untuk customer
                     const cashOutRow = [
-                      `DEBT_${Date.now()}_CASHOUT`,
+                      `DEBT_${Date.now()}_GIVE_MONEY`,
                       selectedContact?.id || '',
                       bulkPaymentData.customerName,
                       'customer',
                       'money',
-                      `Berikan uang ke customer - ${bulkPaymentData.notes}`,
-                      -amount, // Negative karena ini pengeluaran
+                      `💰 Titip uang dari toko - ${bulkPaymentData.notes}`,
+                      amount, // Positive karena customer mendapat uang (jadi saldo bertambah)
                       '',
                       '',
                       0,
                       'completed',
-                      -amount,
-                      -amount,
-                      0,
+                      0, // paidAmount = 0 karena ini bukan pembayaran hutang
+                      amount, // remainingAmount = full amount sebagai saldo customer
+                      amount, // totalAmount = amount yang diberikan
                       '',
                       now,
                       now,
-                      `Cash out ke customer: ${bulkPaymentData.notes}`
+                      `Berikan uang ke customer: ${bulkPaymentData.notes}`
                     ];
                     
                     await GoogleSheetsService.appendToSheet('Debts', [cashOutRow]);
                     
                     const paymentRecord = [
-                      `payment_${Date.now()}_CASHOUT`,
-                      `DEBT_${Date.now()}_CASHOUT`,
+                      `payment_${Date.now()}_GIVE_MONEY`,
+                      `DEBT_${Date.now()}_GIVE_MONEY`,
                       'money',
-                      -amount,
+                      amount, // Positive amount untuk record pemberian
                       '',
                       '',
                       formatWIBDate(new Date()),
@@ -3139,7 +3139,7 @@ const Debts = () => {
                     ];
                     
                     await GoogleSheetsService.appendToSheet('DebtPayments', [paymentRecord]);
-                    showAlertModal('Success', `Berhasil memberikan uang ke customer!\n\nJumlah: ${formatCurrency(amount)}\nCustomer: ${bulkPaymentData.customerName}`, 'success');
+                    showAlertModal('Success', `Berhasil memberikan uang ke customer!\n\nJumlah: ${formatCurrency(amount)}\nCustomer: ${bulkPaymentData.customerName}\n\n💰 Saldo customer bertambah ${formatCurrency(amount)}`, 'success');
                   } else if (bulkPaymentData.paymentType === 'product') {
                     // Berikan barang ke customer (misalnya: refund barang, atau berikan barang dari stok)
                     const selectedProduct = products.find(p => p.id === bulkPaymentData.productId);
@@ -3197,7 +3197,14 @@ const Debts = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     type="button"
-                    onClick={() => setBulkPaymentMode('terima')}
+                    onClick={() => {
+                      setBulkPaymentMode('terima');
+                      // Auto-update deskripsi ketika mode berubah
+                      setBulkPaymentData(prev => ({
+                        ...prev,
+                        notes: prev.customerName ? `Terima pembayaran dari ${prev.customerName}` : ''
+                      }));
+                    }}
                     className={`px-4 py-3 rounded-lg border transition-all ${
                       bulkPaymentMode === 'terima' 
                         ? 'bg-green-50 border-green-300 text-green-700 ring-1 ring-green-300' 
@@ -3212,7 +3219,14 @@ const Debts = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setBulkPaymentMode('berikan')}
+                    onClick={() => {
+                      setBulkPaymentMode('berikan');
+                      // Auto-update deskripsi ketika mode berubah
+                      setBulkPaymentData(prev => ({
+                        ...prev,
+                        notes: prev.customerName ? `Berikan pembayaran ke ${prev.customerName}` : ''
+                      }));
+                    }}
                     className={`px-4 py-3 rounded-lg border transition-all ${
                       bulkPaymentMode === 'berikan' 
                         ? 'bg-blue-50 border-blue-300 text-blue-700 ring-1 ring-blue-300' 
@@ -3246,7 +3260,21 @@ const Debts = () => {
                 <select
                   required
                   value={bulkPaymentData.customerName}
-                  onChange={e => setBulkPaymentData({ ...bulkPaymentData, customerName: e.target.value })}
+                  onChange={e => {
+                    const customerName = e.target.value;
+                    // Auto-update deskripsi ketika customer dipilih
+                    const autoNotes = customerName 
+                      ? (bulkPaymentMode === 'terima' 
+                          ? `Terima pembayaran dari ${customerName}` 
+                          : `Berikan pembayaran ke ${customerName}`)
+                      : '';
+                    
+                    setBulkPaymentData({ 
+                      ...bulkPaymentData, 
+                      customerName,
+                      notes: autoNotes
+                    });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Pilih customer...</option>
