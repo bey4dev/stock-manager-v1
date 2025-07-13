@@ -1573,22 +1573,20 @@ class GoogleSheetsService {
         const rows = response.data || [];
         const dataRows = rows.slice(1); // Skip header
         
-        // Find existing record
+        // Find existing record by contact name (more reliable than contactId)
         const existingRowIndex = dataRows.findIndex((row: any[]) => {
-          const existingContactId = row[0]?.toString().trim();
-          const searchContactId = contactData.contactId?.toString().trim();
-          return existingContactId === searchContactId;
+          const existingContactName = row[1]?.toString().trim().toLowerCase();
+          const searchContactName = contactData.contactName?.toString().trim().toLowerCase();
+          console.log(`[DEBUG StatusHutang] Comparing: "${existingContactName}" vs "${searchContactName}"`);
+          return existingContactName === searchContactName;
         });
         
-        const currentTime = new Date().toLocaleString('id-ID', {
-          timeZone: 'Asia/Jakarta',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
+        console.log(`[DEBUG StatusHutang] Found existing row index: ${existingRowIndex} for contact: ${contactData.contactName}`);
+        
+        
+        // Create timestamp in ISO format for better Google Sheets compatibility
+        const now = new Date();
+        const currentTime = now.toISOString().replace('T', ' ').substring(0, 19); // Format: YYYY-MM-DD HH:MM:SS
         
         const rowData = [
           contactData.contactId,
@@ -1600,7 +1598,7 @@ class GoogleSheetsService {
           contactData.saldoBersih,
           contactData.status,
           contactData.terakhirHutang || currentTime,
-          contactData.terakhirBayar || '',
+          contactData.terakhirBayar || currentTime,
           existingRowIndex >= 0 ? dataRows[existingRowIndex][10] || currentTime : currentTime, // Created At
           currentTime // Updated At
         ];

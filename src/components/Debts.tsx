@@ -1369,21 +1369,15 @@ const Debts = () => {
             status = 'TITIP_UANG';
           }
           
-          // Format waktu terakhir hutang dan bayar dalam WIB
+          // Format waktu terakhir hutang dan bayar dalam format ISO
           const formatWIBTime = (dateString: string) => {
             if (!dateString) return '';
             try {
               const date = new Date(dateString);
-              return date.toLocaleString('id-ID', {
-                timeZone: 'Asia/Jakarta',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              });
+              // Convert to ISO format: YYYY-MM-DD HH:MM:SS (compatible with Google Sheets)
+              return date.toISOString().replace('T', ' ').substring(0, 19);
             } catch (error) {
+              console.log('Error formatting date:', error);
               return '';
             }
           };
